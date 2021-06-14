@@ -13,9 +13,9 @@ v1.0:
   To use another config file update with 'make CONFIG=myFilePath int'
 
 5/On h2:
-  Execute command : 'cd collector'
-  Run : './receive_int.py' if you just want to monitor metadata
-  or : './receive_int.py --o <csv_name>' if you want to save metadata in a CSV file
+  Execute command : 'cd collector'.
+  Run : './receive_int.py' if you just want to monitor metadata.
+  or : './receive_int.py --o <csv_name>' if you want to save metadata in a CSV file.
 
 6/On h4 run :
 	./receive.py
