@@ -1,0 +1,57 @@
+{
+    "target": "bmv2",
+    "p4info": "build/basic_switch.p4.p4info.txt",
+    "bmv2_json": "build/basic_switch.json",
+    "table_entries": [
+        {
+            "table": "SwitchIngress.ipv4_lpm",
+            "default_action": true,
+            "action_name": "SwitchIngress.drop",
+            "action_params" : { }
+        },
+        {
+            "table": "SwitchIngress.ipv4_lpm",
+            "match": {
+                "hdr.ipv4.dstAddr": ["10.0.1.1", 32]
+            },
+            "action_name": "SwitchIngress.ipv4_forward",
+            "action_params": {
+                "dstAddr" : "08:00:00:00:01:00",
+                "port": 1
+            }
+        },
+        {
+            "table": "SwitchIngress.ipv4_lpm",
+            "match": {
+                "hdr.ipv4.dstAddr": ["10.0.4.44", 32]
+            },
+            "action_name": "SwitchIngress.ipv4_forward",
+            "action_params": {
+                "dstAddr" : "08:00:00:00:04:00",
+                "port": 4
+            }
+        },
+        {
+            "table": "SwitchIngress.ipv4_lpm",
+            "match": {
+                "hdr.ipv4.dstAddr": ["10.0.4.4", 32]
+            },
+            "action_name": "SwitchIngress.ipv4_forward",
+            "action_params": {
+                "dstAddr" : "08:00:00:00:04:00",
+                "port": 4
+            }
+        },
+        {
+            "table": "SwitchIngress.ipv4_lpm",
+            "match": {
+                "hdr.ipv4.dstAddr": ["10.0.2.2", 32]
+            },
+            "action_name": "SwitchIngress.ipv4_forward",
+            "action_params": {
+                "dstAddr": "08:00:00:00:02:02",
+                "port": 2
+            }
+        }
+    ]
+}

@@ -1,0 +1,26 @@
+{
+    "hosts": {
+        "h1" : {"ip": "10.0.1.1/24", "mac": "08:00:00:00:01:01",
+                "commands":["route add default gw 10.0.1.11 dev eth0",
+                            "arp -i eth0 -s 10.0.1.11 08:00:00:00:01:00"]},
+        "h2" : {"ip": "10.0.2.2/24", "mac": "08:00:00:00:02:02",
+                "commands":["route add default gw 10.0.2.11 dev eth0",
+                            "arp -i eth0 -s 10.0.2.11 08:00:00:00:02:00"]},
+        "h4" : {"ip": "10.0.4.4/24", "mac": "08:00:00:00:04:04",
+                "commands":["route add default gw 10.0.4.11 dev eth0",
+                            "arp -i eth0 -s 10.0.4.11 08:00:00:00:04:00"]},
+        "h44": {"ip": "10.0.4.44/24", "mac": "08:00:00:00:04:44",
+                "commands":["route add default gw 10.0.4.11 dev eth0",
+                            "arp -i eth0 -s 10.0.4.11 08:00:00:00:04:00"]}
+    },  
+    "switches": {
+        "s1": {"runtime_json" : "topo/s1-runtime.json"},
+        "s2": {"runtime_json" : "topo/s2-runtime.json"},
+        "s3": {"runtime_json" : "topo/s3-runtime.json"},
+        "s4": {"runtime_json" : "topo/s4-runtime.json"}
+    },
+    "links": [
+        ["h1", "s1-p1"], ["s1-p2", "s2-p1", "0", 0.5], ["s1-p3", "s3-p1"], ["s2-p4", "s4-p2"], ["s3-p4", "s4-p3"], ["h4", "s4-p4"], ["h44", "s4-p44"],
+        ["h2", "s2-p2"]
+    ]
+}
