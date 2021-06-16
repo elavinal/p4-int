@@ -58,10 +58,12 @@ def setup_source_instructions(switch, config, p4info_helper):
             instruction |= 0b100000000
     for dest in config['flows']:
         dstAddr = dest['ipv4_dest']
+        dstPort = dest['port_dest']
         table_entry = p4info_helper.buildTableEntry(
             table_name="SwitchEgress.add_int_hdr_lpm",
             match_fields={
-            "hdr.ipv4.dstAddr": (dstAddr, 32)
+            "hdr.ipv4.dstAddr": (dstAddr, 32),
+            "hdr.tcp.dstPort" : (dstPort)
             },
             action_name="SwitchEgress.setup_int",
             action_params={

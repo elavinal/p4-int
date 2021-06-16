@@ -130,6 +130,7 @@ control SwitchEgress(inout headers hdr,
     table add_int_hdr_lpm {
         key = {
             hdr.ipv4.dstAddr : lpm;
+            hdr.tcp.dstPort  : exact;
         }
         actions = {
             setup_int;

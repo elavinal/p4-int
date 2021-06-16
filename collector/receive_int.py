@@ -145,7 +145,7 @@ def parse_metadata(instructions, metadata, meta_size, hop_meta_length, writer):
 
 def handle_pkt(pkt, writer):
 
-    if TCP in pkt and pkt[TCP].dport == 1234:
+    if TCP in pkt and pkt[IP].tos == 0x17:
         print "got a packet"  
         parse_metadata(int(pkt[INTMD].Instructions), 
                        str(pkt)[70:70+int(pkt[INTShim].int_length-3)*4], 
@@ -155,7 +155,7 @@ def handle_pkt(pkt, writer):
     #    hexdump(pkt)
 
 def main(output):
-    bind_layers(TCP, INTShim, dport = 1234)
+    bind_layers(TCP, INTShim)
     bind_layers(INTShim, INTMD, type=1)
     headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
                'hop_latency', 'queue_id', 'queue_occupancy', 
