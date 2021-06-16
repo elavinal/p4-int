@@ -63,11 +63,11 @@ def extract_metadata(metadata, bytes, index):
             index += 1
     return value
 
-def parse_metadata(instructions, metadata, meta_size, hop_meta_length, writer):
+def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writer):
     char_index = 0
     meta_index = 0
-    data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A',
-                'N/A','N/A','N/A','N/A','N/A','N/A']
+    data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A', 'N/A',
+                'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A']
     while meta_size > 0:
         data_row[0]=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         meta_index += 1
@@ -136,6 +136,8 @@ def parse_metadata(instructions, metadata, meta_size, hop_meta_length, writer):
             print "buffer occupancy : %d" % data
             data_row[13] = data
         meta_size -= hop_meta_length
+        print "TCP port : %d" % pkt[TCP].dport
+        data_row[14] = pkt[TCP].dport
         writer.writerow(data_row)
 
 
@@ -147,7 +149,8 @@ def handle_pkt(pkt, writer):
 
     if TCP in pkt and pkt[IP].tos == 0x17:
         print "got a packet"  
-        parse_metadata(int(pkt[INTMD].Instructions), 
+        parse_metadata(pkt,
+                       int(pkt[INTMD].Instructions), 
                        str(pkt)[70:70+int(pkt[INTShim].int_length-3)*4], 
                        int(pkt[INTShim].int_length-3)*4, 
                        int(pkt[INTMD].HopMetaLength)*4, writer)
@@ -161,7 +164,7 @@ def main(output):
                'hop_latency', 'queue_id', 'queue_occupancy', 
                'ingress_timestamp','egress_timestamp',
                'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
-               'buffer_id', 'buffer_occupancy']
+               'buffer_id', 'buffer_occupancy', 'tcp_port']
     write_headers = 1
     if os.path.exists(output):
         write_headers = 0
