@@ -19,4 +19,3 @@ V1Switch(
     SwitchComputeChecksum(),
     SwitchDeparser()
 ) main;
-//NOTE CLASSEMENT MATHS : Lou : 4e | Louison : 3e

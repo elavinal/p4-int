@@ -1,14 +1,14 @@
 # INT configuration
 source:
-  - s1
+  - s4
 transit:
   - s2
   - s3
 sink:
-  - s4
+  - s1
 collector: 10.0.2.2
 flows:
-  - ipv4_dest: 10.0.4.4
+  - ipv4_dest: 10.0.1.1
     l4_proto: tcp
     port_dest: 55555
 instructions:

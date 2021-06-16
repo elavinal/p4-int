@@ -229,11 +229,12 @@ class NetworkStarter:
         device_id = sw_obj.device_id
         print "%s" % str(thrift_port)
         print "Configuring switch to handle cloning"
-        with open("topo/cloning-command.txt", 'r') as fin:
-            cli_outfile = 'logs/%s_cli_output.log' % sw_name
-            with open(cli_outfile, 'w') as fout:
-                subprocess.Popen(['simple_switch_CLI', '--thrift-port', str(thrift_port)],
-                                  stdin=fin)
+        if os.path.exists("topo/%s-commands.txt" % sw_name):
+            with open("topo/%s-commands.txt" % sw_name, 'r') as fin:
+                cli_outfile = 'logs/%s_cli_output.log' % sw_name
+                with open(cli_outfile, 'w') as fout:
+                    subprocess.Popen(['simple_switch_CLI', '--thrift-port', str(thrift_port)],
+                                      stdin=fin)
         runtime_json = sw_dict['runtime_json']
         self.logger('Configurng switch %s using P4Runtime with file %s' % (sw_name, runtime_json))
         with open(runtime_json, 'r') as sw_conf_file:

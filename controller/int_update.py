@@ -56,17 +56,19 @@ def setup_source_instructions(switch, config, p4info_helper):
             instruction |= 0b10000000
         if instruct == 'buffer_id_occupancy':
             instruction |= 0b100000000
-    table_entry = p4info_helper.buildTableEntry(
-        table_name="SwitchEgress.add_int_hdr_lpm",
-        match_fields={
-            "hdr.ipv4.dstAddr": ("10.0.4.4", 32)
-        },
-        action_name="SwitchEgress.setup_int",
-        action_params={
-            "instructionBitmap" : instruction
-        }
-    )
-    switch.WriteTableEntry(table_entry)
+    for dest in config['flows']:
+        dstAddr = dest['ipv4_dest']
+        table_entry = p4info_helper.buildTableEntry(
+            table_name="SwitchEgress.add_int_hdr_lpm",
+            match_fields={
+            "hdr.ipv4.dstAddr": (dstAddr, 32)
+            },
+            action_name="SwitchEgress.setup_int",
+            action_params={
+                "instructionBitmap" : instruction
+            }
+        )
+        switch.WriteTableEntry(table_entry)
 
 #roles : 0 source, 1 transit, 2 sink
 def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, config_file):
@@ -199,6 +201,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Config file for INT')
     parser.add_argument('--config', help='Configuration file',
                         type=str, action="store", required=False,
-                        default='../config/config.yaml')
+                        default='config/config.yaml')
     args = parser.parse_args()
     main(args.config)
