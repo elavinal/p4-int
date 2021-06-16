@@ -140,17 +140,12 @@ def parse_metadata(instructions, metadata, meta_size, hop_meta_length, writer):
 
 
 #bind_layers(IP, INTShim, tos=0x17)
-bind_layers(TCP, INTShim, dport = 1234)
-bind_layers(INTShim, INTMD, type=1)
+
 
 
 def handle_pkt(pkt, writer):
 
     if TCP in pkt and pkt[TCP].dport == 1234:
-        class Int_metadata(Packet):
-            name = "Metadata"
-            fields_desc = [BitField("Meta", 0, (int(pkt[INTShim].int_length)-3)*32)]
-        pkt.show2() 
         print "got a packet"  
         parse_metadata(int(pkt[INTMD].Instructions), 
                        str(pkt)[70:70+int(pkt[INTShim].int_length-3)*4], 
@@ -160,15 +155,17 @@ def handle_pkt(pkt, writer):
     #    hexdump(pkt)
 
 def main(output):
+    bind_layers(TCP, INTShim, dport = 1234)
+    bind_layers(INTShim, INTMD, type=1)
     headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
                'hop_latency', 'queue_id', 'queue_occupancy', 
                'ingress_timestamp','egress_timestamp',
                'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
                'buffer_id', 'buffer_occupancy']
     write_headers = 1
-    if os.path.exists("data/%s" % output):
+    if os.path.exists(output):
         write_headers = 0
-    with open("data/%s" % output, 'a') as file:
+    with open(output, 'a') as file:
         writer = csv.writer(file)
         if write_headers:
             writer.writerow(headers)
@@ -185,4 +182,6 @@ if __name__ == '__main__':
                         type=str, action="store", required=False,
                         default=os.devnull)
     args = parser.parse_args()
+    if args.o != os.devnull:
+        args.o = "../data/%s.csv" % args.o
     main(args.o)
