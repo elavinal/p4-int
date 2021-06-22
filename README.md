@@ -1,6 +1,6 @@
-#P4-int
+# P4-int
 
-##Run:
+## Run:
 
 v1.0:
 
@@ -30,12 +30,12 @@ v1.0:
 	
 h2 should receive the INT report and h4 a message without INT headers (except for some metadata traces)
 
-##Getting Started
+## Getting Started
 
--Follow the p4-guide accordingly to you distribution : https://github.com/jafingerhut/p4-guide
+- Follow the p4-guide accordingly to you distribution : https://github.com/jafingerhut/p4-guide
 
--If your distribution is Ubuntu 20.04 or higher you might have to install pip2 and python 2 by hand.
- If so, follow this guide : https://linuxize.com/post/how-to-install-pip-on-ubuntu-20.04/
+- If your distribution is Ubuntu 20.04 or higher you might have to install pip2 and python 2 by hand.
+  If so, follow this guide : https://linuxize.com/post/how-to-install-pip-on-ubuntu-20.04/
 
--P4C is required to compile the different P4 programs and can be obtained here : https://github.com/p4lang/p4c
+- P4C is required to compile the different P4 programs and can be obtained here : https://github.com/p4lang/p4c
 
