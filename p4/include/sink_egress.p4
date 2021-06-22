@@ -85,7 +85,7 @@ control SwitchEgress(inout headers hdr,
 
     action restore_original() {
         //Restoring IPv4 header
-        hdr.ipv4.tos = (bit<8>) hdr.int_md_shim.nptDependentField;
+        hdr.ipv4.dscp = (bit<6>) hdr.int_md_shim.nptDependentField;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>) hdr.int_md_shim.len << 2);
         //Deleting INT from the client's packet
         hdr.int_md_shim.setInvalid();

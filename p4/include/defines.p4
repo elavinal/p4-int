@@ -17,7 +17,7 @@ const bit<16> TYPE_IPV4      = 0x800;
 const bit<8>  TYPE_TCP       = 0x06;
 const bit<4>  TYPE_INT_MD    = 0x1;
 const bit<4>  VERSION_INT_MD = 0x2;
-const bit<8>  CONTAINS_INT   = 0x17;
+const bit<6>  CONTAINS_INT   = 0x17;
 const bit<3>  HOP_COUNT_EXCEEDED = 0b010;
 const bit<32> REPORT_MIRROR_SESSION_ID = 500;
 /* The following declarations are flags for the INT infos to add */

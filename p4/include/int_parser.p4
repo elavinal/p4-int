@@ -36,7 +36,7 @@ parser SwitchParser(packet_in packet,
 
     state parse_tcp {
         packet.extract(hdr.tcp);
-        transition select(hdr.ipv4.tos) {
+        transition select(hdr.ipv4.dscp) {
             CONTAINS_INT : parse_int_md_shim;
             default      : accept;
         }

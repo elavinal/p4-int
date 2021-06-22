@@ -147,7 +147,7 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
 
 def handle_pkt(pkt, writer):
 
-    if TCP in pkt and pkt[IP].tos == 0x17:
+    if TCP in pkt and pkt[IP].tos == 0x5C:
         print "got a packet"  
         parse_metadata(pkt,
                        int(pkt[INTMD].Instructions), 

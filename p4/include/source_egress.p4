@@ -14,7 +14,7 @@ control SwitchEgress(inout headers hdr,
         hdr.int_md_shim.rsv = 0;
         //length initialized with md header size (3*32bits)
         hdr.int_md_shim.len = 3;
-        hdr.int_md_shim.nptDependentField = (bit<16>) hdr.ipv4.tos;
+        hdr.int_md_shim.nptDependentField = (bit<16>) hdr.ipv4.dscp;
 
         hdr.int_md_header.setValid();
         hdr.int_md_header.version = VERSION_INT_MD;
@@ -28,7 +28,7 @@ control SwitchEgress(inout headers hdr,
         hdr.int_md_header.domainSpecificInstructions = 0;
         hdr.int_md_header.domainSpecificId = 0;
 
-        hdr.ipv4.tos = CONTAINS_INT;
+        hdr.ipv4.dscp = CONTAINS_INT;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16;
     }
 
