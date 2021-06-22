@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import sys
 import struct
 import os
@@ -21,15 +22,13 @@ LVL2_IF_ID          = 0b1000000
 EG_IF_TX_UTIL       = 0b10000000
 BUFFER_ID_OCCUPANCY = 0b100000000
 
-md_index = 0
-
 def get_if():
     ifs=get_if_list()
     iface=None
     for i in get_if_list():
         if "eth0" in i:
             iface=i
-            break;
+            break
     if not iface:
         print("Cannot find eth0 interface")
         exit(1)
@@ -64,100 +63,111 @@ def extract_metadata(metadata, bytes, index):
             index += 1
     return value
 
-def parse_metadata(instructions, metadata, meta_size, hop_meta_length, writer):
+def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writer):
     char_index = 0
     meta_index = 0
-    data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A',
-                'N/A','N/A','N/A','N/A','N/A','N/A']
+    data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A', 'N/A',
+                'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A']
     while meta_size > 0:
         data_row[0]=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         meta_index += 1
-        print ("\n------ Metadata {meta_index} ------")
+        print("\n------ Metadata %d ------" % meta_index)
         if(instructions & NODE_ID):
             data = extract_metadata(metadata, 4, char_index)
-            print("node id : {data}")
+            print(f"node id : {data}")
             data_row[1] = data
             char_index += 4
         if(instructions & LVL1_IF_ID):
             data = extract_metadata(metadata, 2, char_index)
             char_index += 2
-            print("lv1 ingress interface id : {data}")
+            print("lv1 ingress interface id : %d" % data)
             data_row[2] = data
             data = extract_metadata(metadata, 2, char_index)
             char_index += 2       
-            print("lv1 egress interface id : {data}")
+            print("lv1 egress interface id : %d" % data)
             data_row[3] = data
         if(instructions & HOP_LATENCY):
             data = extract_metadata(metadata, 4, char_index)
             char_index += 4
-            print("hop latency : {data} microsec")
+            print("hop latency : %d microsec" % data)
             data_row[4] = data
         if(instructions & QUEUE_ID_OCCUPANCY):
             data = extract_metadata(metadata, 1, char_index)
             char_index += 1
-            print("queue id : {data}")
+            print("queue id : %d" %data)
             data_row[5] = data
             data = extract_metadata(metadata, 3, char_index)
             char_index += 3
-            print("queue occupancy : {data} packet(s)")
+            print("queue occupancy : %d packet(s)" % data)
             data_row[6] = data
         if(instructions & INGRESS_TIMESTAMP):
             data = extract_metadata(metadata, 8, char_index)
             char_index += 8
-            print("ingress timestamp : {data}")
+            print("ingress timestamp : %d " % data)
             data_row[7] = data
+            print(datetime.fromtimestamp(data))
+            print(data)
         if(instructions & EGRESS_TIMESTAMP):
             data = extract_metadata(metadata, 8, char_index)
             char_index += 8
-            print("egress timestamp : {data}")
+            print("egress timestamp : %d" % data)
             data_row[8] = data
         if(instructions & LVL2_IF_ID):
             data = extract_metadata(metadata, 4, char_index)
             char_index += 4
-            print("lv2 ingress interface id : {data}")
+            print("lv2 ingress interface id : %d" % data)
             data_row[9] = data
             data = extract_metadata(metadata, 4, char_index)
             char_index += 4
-            print("lv2 egress interface id : {data}")
+            print("lv2 egress interface id : %d" % data)
             data_row[10] = data
         if(instructions & EG_IF_TX_UTIL):
             data = extract_metadata(metadata, 4, char_index)
             char_index += 4
-            print("egress interface TX utilization : {data}")
+            print("egress interface TX utilization : %d" % data)
             data_row[11] = data
         if(instructions & BUFFER_ID_OCCUPANCY):
             data = extract_metadata(metadata, 1, char_index)
             char_index += 1
-            print("buffer id : {data}")
+            print("buffer id : %d" % data)
             data_row[12] = data
             data = extract_metadata(metadata, 3, char_index)
             char_index += 3
-            print("buffer occupancy : {data}")
+            print("buffer occupancy : %d" % data)
             data_row[13] = data
         meta_size -= hop_meta_length
+        print("TCP port : %d" % pkt[TCP].dport)
+        data_row[14] = pkt[TCP].dport
         writer.writerow(data_row)
 
 
 #bind_layers(IP, INTShim, tos=0x17)
-bind_layers(TCP, INTShim, dport = 1234)
-bind_layers(INTShim, INTMD, type=1)
+
 
 
 def handle_pkt(pkt, writer):
 
-    if TCP in pkt and pkt[TCP].dport == 1234:
-        print("\n\n************ TELEMETRY REPORT ************")
-        parse_metadata(int(pkt[INTMD].Instructions), 
-                       str(pkt)[70:70+int(pkt[INTShim].int_length-3)*4], 
+    if TCP in pkt and pkt[IP].tos == 0x17:
+        print("\n\n********* Receiving Telemtry Report ********")
+        parse_metadata(pkt,
+                       int(pkt[INTMD].Instructions), 
+                       #pkt[Raw].load.decode('cp1250'),
+                       str(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4], 'utf-8', 'ignore'), 
                        int(pkt[INTShim].int_length-3)*4, 
                        int(pkt[INTMD].HopMetaLength)*4, writer)
+        print(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4])
+        pkt.show()
+    #    print int(pkt[Metadata])
+    #    hexdump(pkt)
 
 def main(output):
+    bind_layers(TCP, INTShim)
+    bind_layers(INTShim, INTMD, type=1)
     headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
                'hop_latency', 'queue_id', 'queue_occupancy', 
                'ingress_timestamp','egress_timestamp',
                'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
-               'buffer_id', 'buffer_occupancy']
+               'buffer_id', 'buffer_occupancy', 'tcp_port']
     write_headers = 1
     if os.path.exists(output):
         write_headers = 0
@@ -166,8 +176,9 @@ def main(output):
         if write_headers:
             writer.writerow(headers)
         ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
-        iface = ifaces[0]
-        print("sniffing on {iface}")
+        print(ifaces)
+        iface = 'eth0'
+        print("sniffing on %s" % iface)
         sys.stdout.flush()
         sniff(iface = iface,
             prn = lambda x: handle_pkt(x, writer))
