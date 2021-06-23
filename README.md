@@ -21,11 +21,12 @@ v1.0:
   - Run : './receive_int.py' if you just want to monitor metadata.
   - Or : './receive_int.py --o <csv_name>' if you want to save metadata in a CSV file.
 
-6/On h4 run :
+6/On h1 run :
   - ./receive.py
 
-7/On h1 run :
-  - ./send.py 10.0.4.4 1234 "INT is nice !"
+7/On h4 run :
+  - ./send.py 10.0.1.1 udp 80 "INT is nice !"
+  - ./send.py 10.0.1.1 tcp 55555 "INT is cool !"
 
 	
 h2 should receive the INT report and h4 a message without INT headers (except for some metadata traces)
