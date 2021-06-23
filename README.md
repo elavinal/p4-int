@@ -4,27 +4,27 @@
 
 ### v1.0:
 
-1/Run project with 'make'
+1. Run project with 'make'
 
-2/Open hosts with :
+2. Open hosts with :
   - xterm h1 h2 h4
 
-3/Configure the wanted network data in config/config.yaml
+3. Configure the wanted network data in config/config.yaml
   - Or write a new one with the same fields
 
-4/In another terminal :
+4. In another terminal :
   - Update network behavior with 'make int' if you want to use the config/config.yaml
   - To use another config file update with 'make CONFIG=myFilePath int'
 
-5/On h2:
+5. On h2:
   - Execute command : 'cd collector'.
   - Run : './receive_int.py' if you just want to monitor metadata.
   - Or : './receive_int.py --o <csv_name>' if you want to save metadata in a CSV file.
 
-6/On h1 run :
+6. On h1 run :
   - ./receive.py
 
-7/On h4 run :
+7. On h4 run :
   - ./send.py 10.0.1.1 udp 80 "INT is nice !"
   - ./send.py 10.0.1.1 tcp 55555 "INT is cool !"
 
