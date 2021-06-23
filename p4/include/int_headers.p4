@@ -73,6 +73,7 @@ struct headers {
     ethernet_t            ethernet;
     ipv4_t                ipv4;
     tcp_t                 tcp;
+    udp_t                 udp;
     int_md_shim_t         int_md_shim;
     int_md_header_t       int_md_header;
     node_id_t             node_id;

@@ -22,20 +22,30 @@ parser SwitchParser(packet_in packet,
     state parse_ipv4 {
         packet.extract(hdr.ipv4);
         transition select(hdr.ipv4.ihl) {
-            5       : check_tcp;
+            5       : check_l4_proto;
             default : accept;
         }
     }
 
-    state check_tcp {
+    state check_l4_proto {
         transition select(hdr.ipv4.protoType) {
             TYPE_TCP : parse_tcp;
+            TYPE_UDP : parse_udp;
             default  : accept;
         }
     }
 
     state parse_tcp {
         packet.extract(hdr.tcp);
+        transition check_int;
+    }
+
+    state parse_udp {
+        packet.extract(hdr.udp);
+        transition check_int;
+    }
+
+    state check_int {
         transition select(hdr.ipv4.dscp) {
             CONTAINS_INT : parse_int_md_shim;
             default      : accept;

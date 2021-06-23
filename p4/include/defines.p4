@@ -15,6 +15,7 @@
 
 const bit<16> TYPE_IPV4      = 0x800;
 const bit<8>  TYPE_TCP       = 0x06;
+const bit<8>  TYPE_UDP       = 0x11;
 const bit<4>  TYPE_INT_MD    = 0x1;
 const bit<4>  VERSION_INT_MD = 0x2;
 const bit<6>  CONTAINS_INT   = 0x17;

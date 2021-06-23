@@ -22,7 +22,7 @@ def get_if():
     return iface
 
 def handle_pkt(pkt):
-    if TCP in pkt and pkt[TCP].dport == 1234:
+    if TCP in pkt or UDP in pkt:
         print "got a packet"
         pkt.show2()
     #    hexdump(pkt)

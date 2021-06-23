@@ -30,6 +30,9 @@ control SwitchEgress(inout headers hdr,
 
         hdr.ipv4.dscp = CONTAINS_INT;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16;
+        if(hdr.udp.isValid()) {
+            hdr.udp.len = hdr.udp.len + 16;
+        }
     }
 
     //Creates the node_id header with matching metadata
@@ -127,7 +130,19 @@ control SwitchEgress(inout headers hdr,
 
     /******************* T A B L E S ************************/
 
-    table add_int_hdr_lpm {
+    table add_int_hdr_udp {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+            hdr.udp.dstPort  : exact;
+        }
+        actions = {
+            setup_int;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    table add_int_hdr_tcp {
         key = {
             hdr.ipv4.dstAddr : lpm;
             hdr.tcp.dstPort  : exact;
@@ -240,30 +255,35 @@ control SwitchEgress(inout headers hdr,
 
     apply {
         if(hdr.tcp.isValid()) {
-            add_int_hdr_lpm.apply();
-            //Adding all the required headers according to instruction bitmap
-            if(hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {
-                int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
-                if(instructions & NODE_ID != 0)
-                    add_node_id_hdr.apply();
-                if((instructions & LVL1_IF_ID) != 0)
-                    add_lv1_if_id_hdr.apply();
-                if((instructions & HOP_LATENCY) != 0)
-                    add_hop_latency_hdr.apply();
-                if(instructions & QUEUE_ID_OCCUPANCY != 0)
-                    add_queue_id_occupancy_hdr.apply();
-                if(instructions & INGRESS_TIMESTAMP != 0)
-                    add_ingress_timestamp_hdr.apply();
-                if(instructions & EGRESS_TIMESTAMP != 0)
-                    add_egress_timestamp_hdr.apply();
-                if(instructions & LVL2_IF_ID != 0)
-                    add_lv2_if_id_hdr.apply();
-                if(instructions & EG_IF_TX_UTIL != 0)
-                    add_eg_if_tx_util_hdr.apply();
-                if(instructions & BUFFER_ID_OCCUPANCY != 0)
-                    add_buffer_id_occupancy_hdr.apply();
-            }   
+            add_int_hdr_tcp.apply();
         }
-
+        if(hdr.udp.isValid()) {
+            add_int_hdr_udp.apply();
+        }
+        //Adding all the required headers according to instruction bitmap
+        if(hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {
+            int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
+            if(instructions & NODE_ID != 0)
+                add_node_id_hdr.apply();
+            if((instructions & LVL1_IF_ID) != 0)
+                add_lv1_if_id_hdr.apply();
+            if((instructions & HOP_LATENCY) != 0)
+                add_hop_latency_hdr.apply();
+            if(instructions & QUEUE_ID_OCCUPANCY != 0)
+                add_queue_id_occupancy_hdr.apply();
+            if(instructions & INGRESS_TIMESTAMP != 0)
+                add_ingress_timestamp_hdr.apply();
+            if(instructions & EGRESS_TIMESTAMP != 0)
+                add_egress_timestamp_hdr.apply();
+            if(instructions & LVL2_IF_ID != 0)
+                add_lv2_if_id_hdr.apply();
+            if(instructions & EG_IF_TX_UTIL != 0)
+                add_eg_if_tx_util_hdr.apply();
+            if(instructions & BUFFER_ID_OCCUPANCY != 0)
+                add_buffer_id_occupancy_hdr.apply();
+            if(hdr.udp.isValid()) {
+                hdr.udp.len = hdr.udp.len + (bit<16>) hdr.int_md_header.hopMetaLength;
+            }
+        }
     }
 }

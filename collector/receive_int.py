@@ -12,6 +12,9 @@ from scapy.all import ByteField, PacketListField, ShortField, IntField, LongFiel
 from scapy.all import IP, TCP, UDP, Raw
 from scapy.layers.inet import TCP, bind_layers
 
+UDP_META = 58
+TCP_META = 70
+
 NODE_ID             = 0b1
 LVL1_IF_ID          = 0b10
 HOP_LATENCY         = 0b100
@@ -67,7 +70,7 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
     char_index = 0
     meta_index = 0
     data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A', 'N/A',
-                'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A']
+                'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A', 'N/A']
     while meta_size > 0:
         data_row[0]=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         meta_index += 1
@@ -136,8 +139,14 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
             print "buffer occupancy : %d" % data
             data_row[13] = data
         meta_size -= hop_meta_length
-        print "TCP port : %d" % pkt[TCP].dport
-        data_row[14] = pkt[TCP].dport
+        if TCP in pkt:
+            print "TCP port : %d" % pkt[TCP].dport
+            data_row[14] = pkt[TCP].dport
+            data_row[15] = 'TCP'
+        if UDP in pkt: 
+            print "UDP port : %d" % pkt[UDP].dport
+            data_row[14] = pkt[UDP].dport
+            data_row[15] = 'UDP'
         writer.writerow(data_row)
 
 
@@ -146,12 +155,16 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
 
 
 def handle_pkt(pkt, writer):
-
-    if TCP in pkt and pkt[IP].tos == 0x5C:
-        print "got a packet"  
+    if UDP in pkt and pkt[IP].tos == 0x5C:
         parse_metadata(pkt,
                        int(pkt[INTMD].Instructions), 
-                       str(pkt)[70:70+int(pkt[INTShim].int_length-3)*4], 
+                       str(pkt)[UDP_META:UDP_META+int(pkt[INTShim].int_length-3)*4], 
+                       int(pkt[INTShim].int_length-3)*4, 
+                       int(pkt[INTMD].HopMetaLength)*4, writer)    
+    if TCP in pkt and pkt[IP].tos == 0x5C:
+        parse_metadata(pkt,
+                       int(pkt[INTMD].Instructions), 
+                       str(pkt)[TCP_META:TCP_META+int(pkt[INTShim].int_length-3)*4], 
                        int(pkt[INTShim].int_length-3)*4, 
                        int(pkt[INTMD].HopMetaLength)*4, writer)
     #    print int(pkt[Metadata])
@@ -159,12 +172,13 @@ def handle_pkt(pkt, writer):
 
 def main(output):
     bind_layers(TCP, INTShim)
+    bind_layers(UDP, INTShim)
     bind_layers(INTShim, INTMD, type=1)
     headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
                'hop_latency', 'queue_id', 'queue_occupancy', 
                'ingress_timestamp','egress_timestamp',
                'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
-               'buffer_id', 'buffer_occupancy', 'tcp_port']
+               'buffer_id', 'buffer_occupancy', 'l4_port', 'l4_proto']
     write_headers = 1
     if os.path.exists(output):
         write_headers = 0

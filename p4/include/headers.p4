@@ -36,4 +36,11 @@ header tcp_t {
     bit<16>      urgentPtr;
 }
 
+header udp_t {
+    portNumber_t srcPort;
+    portNumber_t dstPort;
+    bit<16>      len;
+    bit<16>      checksum;
+}
+
 #endif

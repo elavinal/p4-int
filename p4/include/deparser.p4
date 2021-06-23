@@ -6,6 +6,7 @@ control SwitchDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.ethernet);
         packet.emit(hdr.ipv4);
         packet.emit(hdr.tcp);
+        packet.emit(hdr.udp);
         packet.emit(hdr.int_md_shim);
         packet.emit(hdr.int_md_header);
         packet.emit(hdr.node_id);
