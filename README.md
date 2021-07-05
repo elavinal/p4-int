@@ -29,7 +29,7 @@
   - ./send.py 10.0.1.1 tcp 55555 "INT is cool !"
 
 	
-h2 should receive the INT report and h4 a message without INT headers (except for some metadata traces)
+h2 should receive the INT report and h1 a message without INT headers
 
 ## Getting Started
 
