@@ -23,6 +23,13 @@ header int_md_header_t {
     bit<16>           domainSpecificId;
 }
 
+header tel_rep_group_header_t {
+    bit<4>  version; // This spec defines 2
+    bit<6>  hw_id; // to identify NIC
+    bit<22> seq_number; // to be stored in a register and incremented 
+    switchID_t node_id;
+}
+
 /* INT specific metadata headers */
 
 header node_id_t {
@@ -65,26 +72,32 @@ header buffer_id_occupancy_t {
     bit<24> buffer_occupancy;
 }
 
+header metadata_extractor_t {
+    bit<32> md_word;
+}
+
 struct metadata {
-    /* empty */
+    parser_metadata_t parser_metadata;
 }
 
 struct headers {
-    ethernet_t            ethernet;
-    ipv4_t                ipv4;
-    tcp_t                 tcp;
-    udp_t                 udp;
-    int_md_shim_t         int_md_shim;
-    int_md_header_t       int_md_header;
-    node_id_t             node_id;
-    lv1_if_id_t           lv1_if_id;
-    hop_latency_t         hop_latency;
-    queue_id_occupancy_t  queue_id_occupancy;
-    ingress_timestamp_t   ingress_timestamp;
-    egress_timestamp_t    egress_timestamp;
-    lv2_if_id_t           lv2_if_id;
-    eg_if_tx_util_t       eg_if_tx_util;
-    buffer_id_occupancy_t buffer_id_occupancy;
+    ethernet_t                           ethernet;
+    ipv4_t                               ipv4;
+    tcp_t                                tcp;
+    udp_t                                udp;
+    tel_rep_group_header_t               tel_rep_group_header;
+    int_md_shim_t                        int_md_shim;
+    int_md_header_t                      int_md_header;
+    node_id_t                            node_id;
+    lv1_if_id_t                          lv1_if_id;
+    hop_latency_t                        hop_latency;
+    queue_id_occupancy_t                 queue_id_occupancy;
+    ingress_timestamp_t                  ingress_timestamp;
+    egress_timestamp_t                   egress_timestamp;
+    lv2_if_id_t                          lv2_if_id;
+    eg_if_tx_util_t                      eg_if_tx_util;
+    buffer_id_occupancy_t                buffer_id_occupancy;
+    metadata_extractor_t[MAX_MD_WORDS]   metadata_extractor;
 }
 
 #endif

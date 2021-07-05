@@ -11,6 +11,7 @@ control SwitchEgress(inout headers hdr,
     action add_node_id(switchID_t switch_id) {
         hdr.node_id.setValid();
         hdr.node_id.node_id = switch_id;
+        hdr.tel_rep_group_header.node_id = switch_id;
     }
 
     //Creates Level 1 Ingress and Egress Interface IDs header
@@ -81,15 +82,35 @@ control SwitchEgress(inout headers hdr,
         } else {
             hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED;
         }
+        hdr.tel_rep_group_header.setValid();
+        hdr.tel_rep_group_header.version = 2;
+        hdr.tel_rep_group_header.hw_id = 0;
+        hdr.tel_rep_group_header.seq_number = 12; // add a register to read/write
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 8;
+        hdr.tcp.setInvalid();
+        hdr.udp.setValid();
+        hdr.udp.srcPort = hdr.tcp.srcPort;
+        hdr.udp.dstPort = hdr.tcp.dstPort;
+        hdr.udp.len = hdr.ipv4.totalLen - (bit<16>) (hdr.ipv4.ihl << 2);
+        hdr.ipv4.protoType = TYPE_UDP;
     }
 
     action restore_original() {
         //Restoring IPv4 header
         hdr.ipv4.dscp = (bit<6>) hdr.int_md_shim.nptDependentField;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>) hdr.int_md_shim.len << 2);
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen 
+                            - ((bit<16>) hdr.int_md_shim.len << 2)
+                            - 4; // Because INT shim header isn't counted for length
+        if(hdr.udp.isValid()) {
+            hdr.udp.len = hdr.udp.len 
+                          - ((bit<16>) hdr.int_md_shim.len << 2)
+                          - ((bit<16>) hdr.int_md_header.hopMetaLength << 2)
+                          - 4; //Because INT shim header isn't counted for length
+        }
         //Deleting INT from the client's packet
         hdr.int_md_shim.setInvalid();
         hdr.int_md_header.setInvalid();
+        hdr.tel_rep_group_header.setInvalid();
         hdr.node_id.setInvalid();
         hdr.lv1_if_id.setInvalid();
         hdr.hop_latency.setInvalid();
@@ -99,6 +120,7 @@ control SwitchEgress(inout headers hdr,
         hdr.lv2_if_id.setInvalid();
         hdr.eg_if_tx_util.setInvalid();
         hdr.buffer_id_occupancy.setInvalid();
+        hdr.metadata_extractor.pop_front(MAX_MD_WORDS);
     }
 
     /******************* T A B L E S ************************/
@@ -246,7 +268,7 @@ control SwitchEgress(inout headers hdr,
             if(instructions & BUFFER_ID_OCCUPANCY != 0)
                 add_buffer_id_occupancy_hdr.apply();
             if(hdr.udp.isValid()) {
-                hdr.udp.len = hdr.udp.len + (bit<16>) hdr.int_md_header.hopMetaLength;
+                hdr.udp.len = hdr.udp.len + ((bit<16>) hdr.int_md_header.hopMetaLength << 2);
             }
         }
         if (standard_metadata.instance_type == PKT_INSTANCE_TYPE_INGRESS_CLONE) {

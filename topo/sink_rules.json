@@ -1,14 +1,6 @@
 {
     "table_entries": [
         {
-            "table": "SwitchIngress.report_int",
-            "match_fields": {},
-            "action_name": "SwitchIngress.reroute_int",
-            "action_params": {
-                "mon_addr" : "10.0.2.2"
-            }
-        },
-        {
             "table": "SwitchEgress.clear_int",
             "match_fields": {},
             "action_name": "SwitchEgress.restore_original",

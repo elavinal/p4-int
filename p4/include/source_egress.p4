@@ -282,7 +282,7 @@ control SwitchEgress(inout headers hdr,
             if(instructions & BUFFER_ID_OCCUPANCY != 0)
                 add_buffer_id_occupancy_hdr.apply();
             if(hdr.udp.isValid()) {
-                hdr.udp.len = hdr.udp.len + (bit<16>) hdr.int_md_header.hopMetaLength;
+                hdr.udp.len = hdr.udp.len + ((bit<16>) hdr.int_md_header.hopMetaLength << 2);
             }
         }
     }

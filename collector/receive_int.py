@@ -12,8 +12,8 @@ from scapy.all import ByteField, PacketListField, ShortField, IntField, LongFiel
 from scapy.all import IP, TCP, UDP, Raw
 from scapy.layers.inet import TCP, bind_layers
 
-UDP_META = 58
-TCP_META = 70
+UDP_META = 66
+TCP_META = 78
 
 NODE_ID             = 0b1
 LVL1_IF_ID          = 0b10
@@ -56,6 +56,13 @@ class INTShim(Packet):
                    BitField("reserved", 0, 2),
                    BitField("int_length", 0, 8),
                    ShortField("NPT Dependent Field", 0)]
+
+class Tel_Rep_Grp_Hdr(Packet):
+    name = "Telemetry Report Group Header"
+    fields_desc = [BitField("version", 0, 4),
+                   BitField("Hardware ID", 0, 6),
+                   BitField("Sequence Number", 0, 22),
+                   BitField("Node ID", 0, 32)]
 
 def extract_metadata(metadata, bytes, index):
     value = 0
@@ -155,24 +162,27 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
 
 
 def handle_pkt(pkt, writer):
-    if UDP in pkt and pkt[IP].tos == 0x5C:
-        parse_metadata(pkt,
-                       int(pkt[INTMD].Instructions), 
-                       str(pkt)[UDP_META:UDP_META+int(pkt[INTShim].int_length-3)*4], 
-                       int(pkt[INTShim].int_length-3)*4, 
-                       int(pkt[INTMD].HopMetaLength)*4, writer)    
-    if TCP in pkt and pkt[IP].tos == 0x5C:
-        parse_metadata(pkt,
-                       int(pkt[INTMD].Instructions), 
-                       str(pkt)[TCP_META:TCP_META+int(pkt[INTShim].int_length-3)*4], 
-                       int(pkt[INTShim].int_length-3)*4, 
-                       int(pkt[INTMD].HopMetaLength)*4, writer)
-    #    print int(pkt[Metadata])
-    #    hexdump(pkt)
+    if IP in pkt:
+        pkt.show()
+        if UDP in pkt and pkt[IP].tos == 0x5C:
+            parse_metadata(pkt,
+                        int(pkt[INTMD].Instructions), 
+                        str(pkt)[UDP_META:UDP_META+int(pkt[INTShim].int_length-3)*4], 
+                        int(pkt[INTShim].int_length-3)*4, 
+                        int(pkt[INTMD].HopMetaLength)*4, writer)    
+        if TCP in pkt and pkt[IP].tos == 0x5C:
+            parse_metadata(pkt,
+                        int(pkt[INTMD].Instructions), 
+                        str(pkt)[TCP_META:TCP_META+int(pkt[INTShim].int_length-3)*4], 
+                        int(pkt[INTShim].int_length-3)*4, 
+                        int(pkt[INTMD].HopMetaLength)*4, writer)
+        #    print int(pkt[Metadata])
+        #    hexdump(pkt)
 
 def main(output):
-    bind_layers(TCP, INTShim)
-    bind_layers(UDP, INTShim)
+    bind_layers(TCP, Tel_Rep_Grp_Hdr)
+    bind_layers(UDP, Tel_Rep_Grp_Hdr)
+    bind_layers(Tel_Rep_Grp_Hdr, INTShim)
     bind_layers(INTShim, INTMD, type=1)
     headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
                'hop_latency', 'queue_id', 'queue_occupancy', 

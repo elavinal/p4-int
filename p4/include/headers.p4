@@ -1,3 +1,5 @@
+#include "defines.p4"
+
 #ifndef __HEADERS__
 #define __HEADERS__
 
