@@ -5,7 +5,7 @@
 #include "include/defines.p4"
 #include "include/headers.p4"
 #include "include/int_headers.p4"
-#include "include/int_parser.p4"
+#include "include/sink_parser.p4"
 #include "include/sink_ingress.p4"
 #include "include/sink_egress.p4"
 #include "include/deparser.p4"

@@ -7,6 +7,7 @@ control SwitchDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.ipv4);
         packet.emit(hdr.tcp);
         packet.emit(hdr.udp);
+        packet.emit(hdr.tel_rep_group_header);
         packet.emit(hdr.int_md_shim);
         packet.emit(hdr.int_md_header);
         packet.emit(hdr.node_id);
@@ -18,5 +19,6 @@ control SwitchDeparser(packet_out packet, in headers hdr) {
         packet.emit(hdr.lv2_if_id);
         packet.emit(hdr.eg_if_tx_util);
         packet.emit(hdr.buffer_id_occupancy);
+        packet.emit(hdr.metadata_extractor);
     }
 }

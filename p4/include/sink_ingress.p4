@@ -12,7 +12,6 @@ control SwitchIngress(inout headers hdr,
         standard_metadata.egress_spec = port;
         hdr.ethernet.srcAddr = hdr.ethernet.dstAddr;
         hdr.ethernet.dstAddr = dstAddr;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
     }
 
     action clone_packet() {
@@ -47,6 +46,7 @@ control SwitchIngress(inout headers hdr,
 
     apply {
         if(hdr.ipv4.isValid()){
+            hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
             clone_packet();
             if(hdr.int_md_shim.isValid()){
                 report_int.apply();

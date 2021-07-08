@@ -77,7 +77,7 @@ control SwitchEgress(inout headers hdr,
         if(hdr.int_md_header.remainingHopCount > 0) {
             hdr.int_md_shim.len = hdr.int_md_shim.len + (bit<8>) hdr.int_md_header.hopMetaLength;
             hdr.int_md_header.remainingHopCount = hdr.int_md_header.remainingHopCount - 1;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (bit<16>) (hdr.int_md_header.hopMetaLength * 4);
+            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (bit<16>) (hdr.int_md_header.hopMetaLength << 2);
         } else {
             hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED;
         }
@@ -222,7 +222,7 @@ control SwitchEgress(inout headers hdr,
             if(instructions & BUFFER_ID_OCCUPANCY != 0)
                 add_buffer_id_occupancy_hdr.apply();
             if(hdr.udp.isValid()) {
-                hdr.udp.len = hdr.udp.len + (bit<16>) hdr.int_md_header.hopMetaLength;
+                hdr.udp.len = hdr.udp.len + ((bit<16>) hdr.int_md_header.hopMetaLength << 2);
             }
         }
     }
