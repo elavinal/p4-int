@@ -61,7 +61,7 @@ class Tel_Rep_Grp_Hdr(Packet):
     name = "Telemetry Report Group Header"
     fields_desc = [BitField("version", 0, 4),
                    BitField("Hardware ID", 0, 6),
-                   BitField("Sequence Number", 0, 22),
+                   BitField("SequenceNumber", 0, 22),
                    BitField("Node ID", 0, 32)]
 
 def extract_metadata(metadata, bytes, index):
@@ -161,25 +161,28 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
 
 
 
-def handle_pkt(pkt, writer):
+def handle_pkt(pkt, writer, debug, seq_number):
     if IP in pkt:
-        pkt.show()
+        if debug == 'y':
+            pkt.show()
         if UDP in pkt and pkt[IP].tos == 0x5C:
+            new_seq = pkt[Tel_Rep_Grp_Hdr].SequenceNumber
+            print "\n\n=========================="
+            print "[  Sequence number = %d   ]" % new_seq
+            print "=========================="
+            if seq_number == -1:
+                seq_number = new_seq
+            elif seq_number + 1 != new_seq:
+                print 'Telemetry report(s) lost (%d packets)' % (new_seq - seq_number)
             parse_metadata(pkt,
                         int(pkt[INTMD].Instructions), 
                         str(pkt)[UDP_META:UDP_META+int(pkt[INTShim].int_length-3)*4], 
                         int(pkt[INTShim].int_length-3)*4, 
                         int(pkt[INTMD].HopMetaLength)*4, writer)    
-        if TCP in pkt and pkt[IP].tos == 0x5C:
-            parse_metadata(pkt,
-                        int(pkt[INTMD].Instructions), 
-                        str(pkt)[TCP_META:TCP_META+int(pkt[INTShim].int_length-3)*4], 
-                        int(pkt[INTShim].int_length-3)*4, 
-                        int(pkt[INTMD].HopMetaLength)*4, writer)
         #    print int(pkt[Metadata])
         #    hexdump(pkt)
 
-def main(output):
+def main(args, seq_number):
     bind_layers(TCP, Tel_Rep_Grp_Hdr)
     bind_layers(UDP, Tel_Rep_Grp_Hdr)
     bind_layers(Tel_Rep_Grp_Hdr, INTShim)
@@ -190,9 +193,9 @@ def main(output):
                'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
                'buffer_id', 'buffer_occupancy', 'l4_port', 'l4_proto']
     write_headers = 1
-    if os.path.exists(output):
+    if os.path.exists(args.o):
         write_headers = 0
-    with open(output, 'a') as file:
+    with open(args.o, 'a') as file:
         writer = csv.writer(file)
         if write_headers:
             writer.writerow(headers)
@@ -201,14 +204,18 @@ def main(output):
         print "sniffing on %s" % iface
         sys.stdout.flush()
         sniff(iface = iface,
-            prn = lambda x: handle_pkt(x, writer))
+            prn = lambda x: handle_pkt(x, writer, args.debug,seq_number))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CSV outputfile')
     parser.add_argument('--o', help='output CSV file name',
                         type=str, action="store", required=False,
                         default=os.devnull)
+    parser.add_argument('--debug', help='--debug y for debug mode',
+                        type=str, action="store", required=False,
+                        default='n')
     args = parser.parse_args()
     if args.o != os.devnull:
         args.o = "../data/%s.csv" % args.o
-    main(args.o)
+    seq_number = -1
+    main(args, seq_number)

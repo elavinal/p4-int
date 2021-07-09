@@ -5,7 +5,18 @@ control SwitchEgress(inout headers hdr,
                       inout metadata meta,
                       inout standard_metadata_t standard_metadata) {
 
+
+    /******************* R E G I S T E R S *********************/
+    register<bit<22>>(1) seq_number;
+
     /********************** A C T I O N S **********************/
+
+    action increment_counter() {
+        bit<22> tmp;
+        seq_number.read(tmp, 0);
+        tmp = tmp + 1;
+        seq_number.write(0, tmp);
+    }
 
     //Creates the node_id header
     action add_node_id(switchID_t switch_id) {
@@ -85,7 +96,8 @@ control SwitchEgress(inout headers hdr,
         hdr.tel_rep_group_header.setValid();
         hdr.tel_rep_group_header.version = 2;
         hdr.tel_rep_group_header.hw_id = 0;
-        hdr.tel_rep_group_header.seq_number = 12; // add a register to read/write
+        seq_number.read(hdr.tel_rep_group_header.seq_number, 0);
+        increment_counter();
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 8;
         hdr.tcp.setInvalid();
         hdr.udp.setValid();
