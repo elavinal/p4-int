@@ -12,7 +12,8 @@ endif
 all: run
 
 run: build
-	sudo python controller/network_setup.py
+	sudo -E python3 run_exercise.py -t topo/topology.json -b simple_switch_grpc
+#	sudo python controller/network_setup.py
 
 stop:
 	sudo mn -c
@@ -27,7 +28,7 @@ dirs:
 	mkdir -p $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR) $(DATA_DIR)
 
 int:
-	sudo python controller/int_update.py --config $(CONFIG)
+	sudo python3 controller/int_update.py --config $(CONFIG)
 
 clean: stop
 	rm -f *.pcap

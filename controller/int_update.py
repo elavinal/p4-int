@@ -1,11 +1,13 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 import argparse
 import os, sys, json, subprocess, re, argparse
 import grpc
-sys.path.append(
-    os.path.join(os.path.dirname(os.path.abspath(__file__)),
-    'utils/'))
+# sys.path.append(
+#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+#     'utils/'))
+# Import P4Runtime lib from current dir
+sys.path.append('.')
 import p4runtime_lib.bmv2
 from p4runtime_lib.error_utils import printGrpcError
 from p4runtime_lib.switch import ShutdownAllSwitchConnections
@@ -99,7 +101,7 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
         switch.MasterArbitrationUpdate()
         switch.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,
                                            bmv2_json_file_path="%s.json" % p4file)
-        print "Installed P4 Program using SetForwardingPipelineConfig on %s" % switch_name
+        print("Installed P4 Program using SetForwardingPipelineConfig on %s" % switch_name)
         #Basic forwarding rules
         push_rules("topo/%s-runtime.json"% switch_name, switch, p4info_helper)
         if switch_role == SINK:
@@ -198,27 +200,27 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
     except grpc.RpcError as e:
         printGrpcError(e)
 
-    print "Shutting down."
+    print("Shutting down.")
 
     ShutdownAllSwitchConnections()
 
 
 def main(config_file):
-    print "Opening config file %s" % config_file
+    print("Opening config file %s" % config_file)
     with open(config_file) as file:
         config = yaml.full_load(file)
         for switch in config['source']:
-            print "Setting up %s as source" % switch
+            print("Setting up %s as source" % switch)
             configure_switch(switch, "127.0.0.1:5005%s" % switch[1], 
                              int(switch[1])-1, "build/source_switch", SOURCE, config)
         
         for switch in config['transit']:
-            print "Setting up %s as transit" % switch
+            print("Setting up %s as transit" % switch)
             configure_switch(switch, "127.0.0.1:5005%s" % switch[1],
                              int(switch[1])-1, "build/transit_switch", TRANSIT, config)
 
         for switch in config['sink']:
-            print "Setting up %s as sink" % switch
+            print("Setting up %s as sink" % switch)
             configure_switch(switch, "127.0.0.1:5005%s" % switch[1],
                              int(switch[1])-1, "build/sink_switch", SINK, config)
 
