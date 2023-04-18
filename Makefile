@@ -1,6 +1,7 @@
 BUILD_DIR = build
 PCAP_DIR = pcaps
 LOG_DIR = logs
+LOG_LEVEL = debug
 DATA_DIR = data
 
 P4C = p4c-bm2-ss
@@ -12,7 +13,7 @@ endif
 all: run
 
 run: build
-	sudo -E python3 run_exercise.py -t topo/topology.json -b simple_switch_grpc
+	sudo -E python3 run_exercise.py -t topo/topology.json -b simple_switch_grpc -L $(LOG_LEVEL)
 #	sudo python controller/network_setup.py
 
 stop:
