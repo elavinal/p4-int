@@ -116,16 +116,6 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
                     "switch_id": int(switch_name[1]),
                 }
             )
-            switch.WriteTableEntry(table_entry)
-            table_entry = p4info_helper.buildTableEntry(
-                table_name="SwitchIngress.report_int",
-                match_fields={
-                },
-                action_name="SwitchIngress.reroute_int",
-                action_params={
-                    "mon_addr": addr,
-                }
-            )
 
         else:
             for dest in config_file['flows']:
