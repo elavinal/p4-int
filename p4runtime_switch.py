@@ -44,6 +44,7 @@ class P4RuntimeSwitch(P4Switch):
                  device_id = None,
                  enable_debugger = False,
                  log_file = None,
+                 log_level = 'debug',
                  **kwargs):
         Switch.__init__(self, name, **kwargs)
         assert (sw_path)
@@ -82,6 +83,8 @@ class P4RuntimeSwitch(P4Switch):
         self.pcap_dump = pcap_dump
         self.enable_debugger = enable_debugger
         self.log_console = log_console
+        # EDIT EL - set log level
+        self.log_level = log_level
         if log_file is not None:
             self.log_file = log_file
         else:
@@ -125,11 +128,13 @@ class P4RuntimeSwitch(P4Switch):
             args.append("--debugger")
         if self.log_console:
             args.append("--log-console")
+            # EDIT EL - log level
+            args.append("-L " + str(self.log_level))
         if self.thrift_port:
             args.append('--thrift-port ' + str(self.thrift_port))
         if self.grpc_port:
             args.append("-- --grpc-server-addr 0.0.0.0:" + str(self.grpc_port))
-        # EDIT EL
+        # EDIT EL - cpu port
         if self.cpu_port:
             args.append("--cpu-port " + str(self.cpu_port))
         cmd = ' '.join(args)

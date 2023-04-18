@@ -158,7 +158,7 @@ class ExerciseRunner:
             return str(l) + "ms"
 
 
-    def __init__(self, topo_file, log_dir, pcap_dir,
+    def __init__(self, topo_file, log_dir, log_level, pcap_dir,
                        switch_json, bmv2_exe='simple_switch', quiet=False):
         """ Initializes some attributes and reads the topology json. Does not
             actually run the exercise. Use run_exercise() for that.
@@ -191,6 +191,8 @@ class ExerciseRunner:
         self.pcap_dir = pcap_dir
         self.switch_json = switch_json
         self.bmv2_exe = bmv2_exe
+        # EDIT EL
+        self.log_level = log_level
 
 
     def run_exercise(self):
@@ -256,6 +258,7 @@ class ExerciseRunner:
                                 sw_path=self.bmv2_exe,
                                 json_path=self.switch_json,
                                 log_console=True,
+                                log_level=self.log_level, # EDIT EL
                                 pcap_dump=self.pcap_dir)
 
         self.topo = ExerciseTopo(self.hosts, self.switches, self.links, self.log_dir, self.bmv2_exe, self.pcap_dir)
@@ -376,6 +379,8 @@ def get_args():
     parser.add_argument('-t', '--topo', help='Path to topology json',
                         type=str, required=False, default='./topology.json')
     parser.add_argument('-l', '--log-dir', type=str, required=False, default=default_logs)
+    # EDIT EL -- add log level ('trace', 'debug', 'info', 'warn', 'error', off')
+    parser.add_argument('-L', '--log-level', type=str, required=False, default='debug')
     parser.add_argument('-p', '--pcap-dir', type=str, required=False, default=default_pcaps)
     parser.add_argument('-j', '--switch_json', type=str, required=False)
     parser.add_argument('-b', '--behavioral-exe', help='Path to behavioral executable',
@@ -388,7 +393,7 @@ if __name__ == '__main__':
     # setLogLevel("info")
 
     args = get_args()
-    exercise = ExerciseRunner(args.topo, args.log_dir, args.pcap_dir,
+    exercise = ExerciseRunner(args.topo, args.log_dir, args.log_level, args.pcap_dir,
                               args.switch_json, args.behavioral_exe, args.quiet)
 
     exercise.run_exercise()
