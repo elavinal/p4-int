@@ -49,10 +49,10 @@ class INTMD(Packet):
 class INTShim(Packet):
     name = "INT Shim header"
     fields_desc = [BitField("type", 0, 4),
-                   BitField("next protocol", 0, 2),
+                   BitField("next_protocol", 0, 2),
                    BitField("reserved", 0, 2),
                    BitField("int_length", 0, 8),
-                   ShortField("NPT Dependent Field", 0)]
+                   ShortField("NPT_Dependent_Field", 0)]
 
 def extract_metadata(metadata, bytes, index):
     value = 0
