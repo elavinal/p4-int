@@ -66,80 +66,80 @@ def extract_metadata(metadata, bytes, index):
 def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writer):
     char_index = 0
     meta_index = 0
-    data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A', 'N/A',
-                'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A']
+    #data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A', 'N/A',
+                #'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A']
     while meta_size > 0:
-        data_row[0]=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+        #data_row[0]=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         meta_index += 1
         print("\n------ Metadata %d ------" % meta_index)
         if(instructions & NODE_ID):
             data = extract_metadata(metadata, 4, char_index)
             print(f"node id : {data}")
-            data_row[1] = data
-            char_index += 4
+            #data_row[1] = data
+            #char_index += 4
         if(instructions & LVL1_IF_ID):
             data = extract_metadata(metadata, 2, char_index)
-            char_index += 2
+            #char_index += 2
             print("lv1 ingress interface id : %d" % data)
-            data_row[2] = data
+            #data_row[2] = data
             data = extract_metadata(metadata, 2, char_index)
-            char_index += 2       
+            #char_index += 2       
             print("lv1 egress interface id : %d" % data)
-            data_row[3] = data
+            #data_row[3] = data
         if(instructions & HOP_LATENCY):
             data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
+            #char_index += 4
             print("hop latency : %d microsec" % data)
-            data_row[4] = data
+            #data_row[4] = data
         if(instructions & QUEUE_ID_OCCUPANCY):
             data = extract_metadata(metadata, 1, char_index)
-            char_index += 1
+            #char_index += 1
             print("queue id : %d" %data)
-            data_row[5] = data
+            #data_row[5] = data
             data = extract_metadata(metadata, 3, char_index)
-            char_index += 3
+            #char_index += 3
             print("queue occupancy : %d packet(s)" % data)
-            data_row[6] = data
+            #data_row[6] = data
         if(instructions & INGRESS_TIMESTAMP):
             data = extract_metadata(metadata, 8, char_index)
-            char_index += 8
+            #char_index += 8
             print("ingress timestamp : %d " % data)
-            data_row[7] = data
+            #data_row[7] = data
             print(datetime.fromtimestamp(data))
             print(data)
         if(instructions & EGRESS_TIMESTAMP):
             data = extract_metadata(metadata, 8, char_index)
-            char_index += 8
+            #char_index += 8
             print("egress timestamp : %d" % data)
-            data_row[8] = data
+            #data_row[8] = data
         if(instructions & LVL2_IF_ID):
             data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
+            #char_index += 4
             print("lv2 ingress interface id : %d" % data)
-            data_row[9] = data
+            #data_row[9] = data
             data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
+            #char_index += 4
             print("lv2 egress interface id : %d" % data)
-            data_row[10] = data
+            #data_row[10] = data
         if(instructions & EG_IF_TX_UTIL):
             data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
+            #char_index += 4
             print("egress interface TX utilization : %d" % data)
-            data_row[11] = data
+            #data_row[11] = data
         if(instructions & BUFFER_ID_OCCUPANCY):
             data = extract_metadata(metadata, 1, char_index)
-            char_index += 1
+            #char_index += 1
             print("buffer id : %d" % data)
-            data_row[12] = data
+            #data_row[12] = data
             data = extract_metadata(metadata, 3, char_index)
-            char_index += 3
+            #char_index += 3
             print("buffer occupancy : %d" % data)
-            data_row[13] = data
+            #data_row[13] = data
         meta_size -= hop_meta_length
         print("TCP port : %d" % pkt[TCP].dport)
-        data_row[14] = pkt[TCP].dport
-        writer.writerow(data_row)
-
+        #data_row[14] = pkt[TCP].dport
+        #writer.writerow(data_row)
+        
 
 #bind_layers(IP, INTShim, tos=0x17)
 
@@ -149,13 +149,13 @@ def handle_pkt(pkt, writer):
 
     if TCP in pkt and pkt[IP].tos == 0x5C:
         print("\n\n********* Receiving Telemtry Report ********")
+        
         parse_metadata(pkt,
                        int(pkt[INTMD].Instructions), 
                        #pkt[Raw].load.decode('cp1250'),
                        str(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4], 'utf-8', 'ignore'), 
                        int(pkt[INTShim].int_length-3)*4, 
                        int(pkt[INTMD].HopMetaLength)*4, writer)
-        print(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4])
         pkt.show()
     #    print int(pkt[Metadata])
     #    hexdump(pkt)

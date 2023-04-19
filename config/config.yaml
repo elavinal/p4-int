@@ -17,7 +17,7 @@ flows:
 instructions:
   - node_id
   - hop_latency
-  - queue_id_occupancy
+  - egress_timestamp
 
 # Possible metadata instructions:
 # - node_id
