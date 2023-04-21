@@ -26,7 +26,7 @@ def handle_pkt(pkt):
         if TCP in pkt or UDP in pkt:
             print( "got a packet")
             pkt.show2()
-        #    hexdump(pkt)
+            hexdump(pkt)
             sys.stdout.flush()
 
 

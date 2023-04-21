@@ -93,19 +93,24 @@ control SwitchEgress(inout headers hdr,
         } else {
             hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED;
         }
+    }
+    action ToUDP(){
         hdr.tel_rep_group_header.setValid();
         hdr.tel_rep_group_header.version = 2;
         hdr.tel_rep_group_header.hw_id = 0;
         seq_number.read(hdr.tel_rep_group_header.seq_number, 0);
         increment_counter();
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 8;
-        hdr.tcp.setInvalid();
         hdr.udp.setValid();
         hdr.udp.srcPort = hdr.tcp.srcPort;
         hdr.udp.dstPort = hdr.tcp.dstPort;
+        hdr.tcp.setInvalid();
         hdr.udp.len = hdr.ipv4.totalLen - (bit<16>) (hdr.ipv4.ihl << 2);
         hdr.ipv4.protoType = TYPE_UDP;
+
     }
+        
+    
 
     action restore_original() {
         //Restoring IPv4 header
@@ -259,7 +264,6 @@ control SwitchEgress(inout headers hdr,
            && hdr.int_md_header.isValid()
            && (hdr.int_md_header.flags & HOP_COUNT_EXCEEDED == 0b000)) {
             
-            update_int_hdrs.apply();
             int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
             if(instructions & NODE_ID != 0)
                 add_node_id_hdr.apply();
@@ -282,9 +286,14 @@ control SwitchEgress(inout headers hdr,
             if(hdr.udp.isValid()) {
                 hdr.udp.len = hdr.udp.len + ((bit<16>) hdr.int_md_header.hopMetaLength << 2);
             }
-        }
-        if (standard_metadata.instance_type == 0 && hdr.int_md_shim.isValid()) {
+
+            update_int_hdrs.apply();
+            if (standard_metadata.instance_type == 0 && hdr.int_md_shim.isValid()) {
             clear_int.apply();
+            }
+            else{
+                ToUDP();
+            }
         }
     }
 }
