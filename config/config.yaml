@@ -16,7 +16,6 @@ flows:
     port_dest: 55555
 instructions:
   - node_id
-
 # Possible metadata instructions:
 # - node_id
 # - lv1_if_id

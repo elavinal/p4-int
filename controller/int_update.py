@@ -104,8 +104,9 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
         print("Installed P4 Program using SetForwardingPipelineConfig on %s" % switch_name)
         #Basic forwarding rules
         push_rules("topo/%s-runtime.json"% switch_name, switch, p4info_helper)
-        if switch_role == SINK:
-            addr = config_file['collector']
+       
+        for dest in config_file['flows']:
+            addr = dest['ipv4_dest']
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.add_node_id_hdr",
                 match_fields={
@@ -115,59 +116,44 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
                 action_params={
                     "switch_id": int(switch_name[1]),
                 }
-            )
-
-        else:
-            for dest in config_file['flows']:
-                addr = dest['ipv4_dest']
-                table_entry = p4info_helper.buildTableEntry(
-                    table_name="SwitchEgress.add_node_id_hdr",
-                    match_fields={
-                        "hdr.ipv4.dstAddr": (addr, 32)
-                    },
-                    action_name="SwitchEgress.add_node_id",
-                    action_params={
-                        "switch_id": int(switch_name[1]),
-                    }
-                ) 
+            ) 
         switch.WriteTableEntry(table_entry)
-        if switch_role != SINK:
-            write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
+        write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
                         "SwitchEgress.add_lv1_if_id", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_hop_latency_hdr",
+        write_int_rules("SwitchEgress.add_hop_latency_hdr",
                         "SwitchEgress.add_hop_latency", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_queue_id_occupancy_hdr",
+        write_int_rules("SwitchEgress.add_queue_id_occupancy_hdr",
                         "SwitchEgress.add_queue_id_occupancy", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_ingress_timestamp_hdr",
+        write_int_rules("SwitchEgress.add_ingress_timestamp_hdr",
                         "SwitchEgress.add_ingress_timestamp", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_egress_timestamp_hdr",
+        write_int_rules("SwitchEgress.add_egress_timestamp_hdr",
                         "SwitchEgress.add_egress_timestamp", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_lv2_if_id_hdr",
+        write_int_rules("SwitchEgress.add_lv2_if_id_hdr",
                         "SwitchEgress.add_lv2_if_id", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_eg_if_tx_util_hdr",
+        write_int_rules("SwitchEgress.add_eg_if_tx_util_hdr",
                         "SwitchEgress.add_eg_if_tx_util", 
                         p4info_helper, 
                         addr, 
                         switch)
-            write_int_rules("SwitchEgress.add_buffer_id_occupancy_hdr",
+        write_int_rules("SwitchEgress.add_buffer_id_occupancy_hdr",
                         "SwitchEgress.add_buffer_id_occupancy", 
                         p4info_helper, 
                         addr, 

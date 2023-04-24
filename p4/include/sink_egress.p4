@@ -85,27 +85,39 @@ control SwitchEgress(inout headers hdr,
     }
 
     //Updates the length of metadata
+    // action update_int_headers() {
+    //     if(hdr.int_md_header.remainingHopCount > 0) {
+    //         hdr.int_md_shim.len = hdr.int_md_shim.len + (bit<8>) hdr.int_md_header.hopMetaLength;
+    //         hdr.int_md_header.remainingHopCount = hdr.int_md_header.remainingHopCount - 1;
+    //     hdr.ipv4.totalLen = hdr.ipv4.totalLen + (bit<16>) (hdr.int_md_header.hopMetaLength * 4);
+    //     } else {
+    //         hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED;
+    //     }
+        
+    // }
+
     action update_int_headers() {
         if(hdr.int_md_header.remainingHopCount > 0) {
-            hdr.int_md_shim.len = hdr.int_md_shim.len + (bit<8>) hdr.int_md_header.hopMetaLength;
-            hdr.int_md_header.remainingHopCount = hdr.int_md_header.remainingHopCount - 1;
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + (bit<16>) (hdr.int_md_header.hopMetaLength * 4);
+            hdr.int_md_shim.len = hdr.int_md_shim.len + (bit<8>) hdr.int_md_header.hopMetaLength; //add the lenght of all information from a station 
+            hdr.int_md_header.remainingHopCount = hdr.int_md_header.remainingHopCount - 1; //decrement the hop left 
+            hdr.ipv4.totalLen = hdr.ipv4.totalLen + (bit<16>) (hdr.int_md_header.hopMetaLength << 2); //add lenght to ipv4
         } else {
-            hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED;
+            hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED; //this packet will no longer take information from ulterior station
         }
     }
     action ToUDP(){
         hdr.tel_rep_group_header.setValid();
         hdr.tel_rep_group_header.version = 2;
         hdr.tel_rep_group_header.hw_id = 0;
+        hdr.tel_rep_group_header.node_id= 3;
         seq_number.read(hdr.tel_rep_group_header.seq_number, 0);
         increment_counter();
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen + 8;
+        hdr.ipv4.totalLen = hdr.ipv4.totalLen  - 4 ; //coupe barbare , il faudra trouver la vrai source du pb
         hdr.udp.setValid();
         hdr.udp.srcPort = hdr.tcp.srcPort;
         hdr.udp.dstPort = hdr.tcp.dstPort;
         hdr.tcp.setInvalid();
-        hdr.udp.len = hdr.ipv4.totalLen - (bit<16>) (hdr.ipv4.ihl << 2);
+        hdr.udp.len = hdr.ipv4.totalLen - (bit<16>) hdr.ipv4.ihl -19  ; //coupe barbare , il faudra trouver la vrai source du pb
         hdr.ipv4.protoType = TYPE_UDP;
 
     }
