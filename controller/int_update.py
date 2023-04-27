@@ -63,6 +63,7 @@ def setup_source_instructions(switch, config, p4info_helper):
         srcAddr = dest['ipv4_src']
         dstPort = dest['port_dest']
         flowId = dest['id']
+        frequency = dest['frequency']
 
         if dest['l4_proto'] == 'tcp':
             table_entry = p4info_helper.buildTableEntry(
@@ -77,6 +78,22 @@ def setup_source_instructions(switch, config, p4info_helper):
                     "instructionBitmap" : instruction
                 }
             )
+            switch.WriteTableEntry(table_entry)
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchEgress.sampleTCP",
+                match_fields={
+                "hdr.ipv4.dstAddr": (dstAddr, 32),
+                "hdr.ipv4.srcAddr": (srcAddr),
+                "hdr.tcp.dstPort" : (dstPort)
+                },
+                action_name="SwitchEgress.increment",
+                action_params={
+                    "id" : flowId,
+                    "frequency" : frequency
+                }
+            )
+            switch.WriteTableEntry(table_entry)
+
         elif dest['l4_proto'] == 'udp':
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.add_int_hdr_udp",
@@ -90,7 +107,22 @@ def setup_source_instructions(switch, config, p4info_helper):
                     "instructionBitmap" : instruction
                 }
             )
-        switch.WriteTableEntry(table_entry)
+            switch.WriteTableEntry(table_entry)
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchEgress.sampleUDP",
+                match_fields={
+                "hdr.ipv4.dstAddr": (dstAddr, 32),
+                "hdr.ipv4.srcAddr": (srcAddr),
+                "hdr.udp.dstPort" : (dstPort)
+                },
+                action_name="SwitchEgress.increment",
+                action_params={
+                    "id" : flowId,
+                    "frequency" : frequency
+                }
+            )
+            switch.WriteTableEntry(table_entry)
+        
 
 #roles : 0 source, 1 transit, 2 sink
 def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, config_file):
