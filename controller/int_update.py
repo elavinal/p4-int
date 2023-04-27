@@ -60,12 +60,16 @@ def setup_source_instructions(switch, config, p4info_helper):
             instruction |= 0b100000000
     for dest in config['flows']:
         dstAddr = dest['ipv4_dest']
+        srcAddr = dest['ipv4_src']
         dstPort = dest['port_dest']
+        flowId = dest['id']
+
         if dest['l4_proto'] == 'tcp':
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.add_int_hdr_tcp",
                 match_fields={
                 "hdr.ipv4.dstAddr": (dstAddr, 32),
+                "hdr.ipv4.srcAddr": (srcAddr),
                 "hdr.tcp.dstPort" : (dstPort)
                 },
                 action_name="SwitchEgress.setup_int",
@@ -78,6 +82,7 @@ def setup_source_instructions(switch, config, p4info_helper):
                 table_name="SwitchEgress.add_int_hdr_udp",
                 match_fields={
                 "hdr.ipv4.dstAddr": (dstAddr, 32),
+                "hdr.ipv4.srcAddr": (srcAddr),
                 "hdr.udp.dstPort" : (dstPort)
                 },
                 action_name="SwitchEgress.setup_int",

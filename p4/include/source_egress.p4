@@ -133,6 +133,7 @@ control SwitchEgress(inout headers hdr,
     table add_int_hdr_udp {
         key = {
             hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : exact;
             hdr.udp.dstPort  : exact;
         }
         actions = {
@@ -145,6 +146,7 @@ control SwitchEgress(inout headers hdr,
     table add_int_hdr_tcp {
         key = {
             hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : exact;
             hdr.tcp.dstPort  : exact;
         }
         actions = {
