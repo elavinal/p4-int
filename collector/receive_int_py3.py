@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import sys
 import struct
 import os
@@ -11,6 +12,18 @@ from scapy.all import Packet, IPOption
 from scapy.all import ByteField, PacketListField, ShortField, IntField, LongField, BitField, FieldListField, FieldLenField
 from scapy.all import IP, TCP, UDP, Raw
 from scapy.layers.inet import TCP, UDP, bind_layers
+import grpc
+# sys.path.append(
+#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+#     'utils/'))
+# Import P4Runtime lib from current dir
+sys.path.append('.')
+import p4runtime_lib.bmv2
+from p4runtime_lib.error_utils import printGrpcError
+from p4runtime_lib.switch import ShutdownAllSwitchConnections
+import p4runtime_lib.helper
+import p4runtime_lib.simple_controller as p4controller
+import yaml
 
 NODE_ID             = 0b1
 LVL1_IF_ID          = 0b10
@@ -182,28 +195,33 @@ def handle_pkt(pkt, writer):
         hexdump(pkt)
 
 def main(output):
-    bind_layers(UDP, TRGP)
-    bind_layers(TRGP,INTShim)
-    bind_layers(INTShim, INTMD, type=1)
-    headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
-               'hop_latency', 'queue_id', 'queue_occupancy', 
-               'ingress_timestamp','egress_timestamp',
-               'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
-               'buffer_id', 'buffer_occupancy', 'UDP_port']
-    write_headers = 1
-    if os.path.exists(output):
-        write_headers = 0
-    with open(output, 'a') as file:
-        writer = csv.writer(file)
-        if write_headers:
-            writer.writerow(headers)
-        ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
-        print(ifaces)
-        iface = 'eth0'
-        print("sniffing on %s" % iface)
-        sys.stdout.flush()
-        sniff(iface = iface,
-            prn = lambda x: handle_pkt(x, writer))
+    sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
+            name='s4',
+            address='127.0.0.1:50054',
+            device_id=0,
+            proto_dump_file='logs/s4-p4runtime-requests.txt')
+    while True:
+            packetin = sw.PacketIn()
+            if packetin.WhichOneof('update') == 'packet':
+                print("Received Packet-in")
+                raw_packet = packetin.packet.payload
+                # print(packet)
+                scapy_pkt = Ether(raw_packet)
+                # scapy_pkt.show()
+                ether_type = scapy_pkt.type
+                eth_src = scapy_pkt.src
+                # if packet is IPv4 or ARP
+                if ether_type == 0x0800 or ether_type == 0x0806:
+                    metadata = packetin.packet.metadata 
+                    for meta in metadata:
+                        id = meta.metadata_id 
+                        value = meta.value
+                        print("id " + str(id) + " value " + str(value))
+                    print("*** Learning from %s on port %d ***" % (eth_src, decodeNum(value)))
+                    learn(p4info_helper, sw, eth_src, decodeNum(value))
+                else:
+                    print("Packet type not implemented")
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CSV outputfile')

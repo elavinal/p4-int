@@ -31,7 +31,7 @@ header tel_rep_group_header_t {
 }
 
 /* INT specific metadata headers */
-
+@controller_header("packet_in")
 header node_id_t {
     switchID_t node_id;
 }

@@ -10,7 +10,7 @@
     "clone_session_entries": [
         {
           "clone_session_id": 500,
-          "replicas": [ {"egress_port": 1, "instance": 1} ]
+          "replicas": [ {"egress_port": 255, "instance": 1} ]
         }
       ]
 }

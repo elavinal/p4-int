@@ -31,8 +31,9 @@ dirs:
 int:
 	sudo python3 controller/int_update.py --config $(CONFIG)
 
-collector 
-	sudo python3 collector/receive_int_py3.py 
+collector :
+	sudo python3 collector/receive_int_py3.py
+
 clean: stop
 	rm -f *.pcap
 	rm -rf $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR) $(DATA_DIR)
