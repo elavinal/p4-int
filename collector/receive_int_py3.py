@@ -3,9 +3,11 @@
 import sys
 import struct
 import os
-
+import json
 import csv
 import argparse
+
+
 from datetime import datetime
 from scapy.all import sniff, sendp, hexdump, get_if_list, get_if_hwaddr
 from scapy.all import Packet, IPOption
@@ -24,6 +26,8 @@ from p4runtime_lib.switch import ShutdownAllSwitchConnections
 import p4runtime_lib.helper
 import p4runtime_lib.simple_controller as p4controller
 import yaml
+from p4runtime_lib.convert import decodeNum
+
 
 NODE_ID             = 0b1
 LVL1_IF_ID          = 0b10
@@ -194,14 +198,32 @@ def handle_pkt(pkt, writer):
         pkt.show()
         hexdump(pkt)
 
-def main(output):
+def main():
+    workdir = '.' 
+    print('Using P4Info file %s' % 'build/basic_switch.p4.p4info.txt')
+    p4info_file_path = os.path.join(workdir,'build/basic_switch.p4.p4info.txt')
+    print('Using BMv2 json file %s' % 'build/basic_switch.json')
+    bmv2_file_path = os.path.join(workdir,'build/basic_switch.json')
+    
+    # Instantiate a P4Runtime helper from the p4info file
+    p4info_helper = p4runtime_lib.helper.P4InfoHelper(p4info_file_path)
+
+
     sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
             name='s4',
             address='127.0.0.1:50054',
             device_id=0,
             proto_dump_file='logs/s4-p4runtime-requests.txt')
+    sw.MasterArbitrationUpdate()
+
+        # Install the P4 program (bmv2_json_file_path) on the switch 
+    # sw.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,
+    #                                    bmv2_json_file_path=bmv2_file_path)
+    print("connexion au switch effectué")
     while True:
+            print("Attente packet")
             packetin = sw.PacketIn()
+            print("packet reçu")
             if packetin.WhichOneof('update') == 'packet':
                 print("Received Packet-in")
                 raw_packet = packetin.packet.payload
@@ -224,11 +246,4 @@ def main(output):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='CSV outputfile')
-    parser.add_argument('--o', help='output CSV file name',
-                        type=str, action="store", required=False,
-                        default=os.devnull)
-    args = parser.parse_args()
-    if args.o != os.devnull:
-        args.o = "../data/%s.csv" % args.o
-    main(args.o)
+    main()

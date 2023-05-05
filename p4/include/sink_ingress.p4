@@ -15,7 +15,7 @@ control SwitchIngress(inout headers hdr,
     }
 
     action clone_packet() {
-        clone(CloneType.I2E, REPORT_MIRROR_SESSION_ID);
+        clone_preserving_field_list(CloneType.I2E, REPORT_MIRROR_SESSION_ID, 1);
     }
 /* -- Outdated --  
     action reroute_int(ipv4Addr_t mon_addr) {

@@ -73,10 +73,12 @@ header buffer_id_occupancy_t {
 }
 
 header metadata_extractor_t {
+   
     bit<32> md_word;
 }
 
 struct metadata {
+    @field_list(1)
     parser_metadata_t parser_metadata;
 }
 
