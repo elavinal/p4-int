@@ -35,7 +35,7 @@ def ShutdownAllSwitchConnections():
 
 class SwitchConnection(object):
 
-    def __init__(self, name=None, address='127.0.0.1:50051', device_id=0,
+    def __init__(self, name=None, address='127.0.0.1:50054', device_id=3,
                  proto_dump_file=None):
         self.name = name
         self.address = address
@@ -163,7 +163,7 @@ class SwitchConnection(object):
         else:
             self.client_stub.Write(request)
     
-    # EDIT EL
+    # EDIT EL   
     def PacketIn(self, dry_run=False, **kwargs):
         request = p4runtime_pb2.StreamMessageRequest()
         if dry_run:

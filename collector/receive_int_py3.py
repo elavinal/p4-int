@@ -1,16 +1,33 @@
 #!/usr/bin/env python3
+
 import sys
 import struct
 import os
-
+import json
 import csv
 import argparse
+
+
 from datetime import datetime
 from scapy.all import sniff, sendp, hexdump, get_if_list, get_if_hwaddr
 from scapy.all import Packet, IPOption
 from scapy.all import ByteField, PacketListField, ShortField, IntField, LongField, BitField, FieldListField, FieldLenField
 from scapy.all import IP, TCP, UDP, Raw
 from scapy.layers.inet import TCP, UDP, bind_layers
+import grpc
+# sys.path.append(
+#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+#     'utils/'))
+# Import P4Runtime lib from current dir
+sys.path.append('.')
+import p4runtime_lib.bmv2
+from p4runtime_lib.error_utils import printGrpcError
+from p4runtime_lib.switch import ShutdownAllSwitchConnections
+import p4runtime_lib.helper
+import p4runtime_lib.simple_controller as p4controller
+import yaml
+from p4runtime_lib.convert import decodeNum
+
 
 NODE_ID             = 0b1
 LVL1_IF_ID          = 0b10
@@ -181,36 +198,52 @@ def handle_pkt(pkt, writer):
         pkt.show()
         hexdump(pkt)
 
-def main(output):
-    bind_layers(UDP, TRGP)
-    bind_layers(TRGP,INTShim)
-    bind_layers(INTShim, INTMD, type=1)
-    headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
-               'hop_latency', 'queue_id', 'queue_occupancy', 
-               'ingress_timestamp','egress_timestamp',
-               'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
-               'buffer_id', 'buffer_occupancy', 'UDP_port']
-    write_headers = 1
-    if os.path.exists(output):
-        write_headers = 0
-    with open(output, 'a') as file:
-        writer = csv.writer(file)
-        if write_headers:
-            writer.writerow(headers)
-        ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
-        print(ifaces)
-        iface = 'eth0'
-        print("sniffing on %s" % iface)
-        sys.stdout.flush()
-        sniff(iface = iface,
-            prn = lambda x: handle_pkt(x, writer))
+def main():
+    workdir = '.' 
+    print('Using P4Info file %s' % 'build/sink_switch.p4.p4info.txt')
+    p4info_file_path = os.path.join(workdir,'build/sink_switch.p4.p4info.txt')
+    print('Using BMv2 json file %s' % 'build/sink_switch.json')
+    bmv2_file_path = os.path.join(workdir,'build/sink_switch.json')
+    
+    # Instantiate a P4Runtime helper from the p4info file
+    p4info_helper = p4runtime_lib.helper.P4InfoHelper(p4info_file_path)
+
+
+    sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
+            name='s4',
+            address='127.0.0.1:50054',
+            device_id=0,
+            proto_dump_file='logs/s4-2-p4runtime-requests.txt')
+    sw.MasterArbitrationUpdate()
+
+        # Install the P4 program (bmv2_json_file_path) on the switch 
+    # sw.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,
+    #                                    bmv2_json_file_path=bmv2_file_path)
+    print("connexion au switch effectué")
+    while True:
+            print("Attente packet")
+            packetin = sw.PacketIn()
+            print("packet reçu")
+            if packetin.WhichOneof('update') == 'digest':
+                print("Received Packet-in")
+                raw_packet = packetin.packet.payload
+                # print(packet)
+                scapy_pkt = Ether(raw_packet)
+                # scapy_pkt.show()
+                ether_type = scapy_pkt.type
+                eth_src = scapy_pkt.src
+                # if packet is IPv4 or ARP
+                if ether_type == 0x0800 or ether_type == 0x0806:
+                    metadata = packetin.packet.metadata 
+                    for meta in metadata:
+                        id = meta.metadata_id 
+                        value = meta.value
+                        print("id " + str(id) + " value " + str(value))
+                    print("*** Learning from %s on port %d ***" % (eth_src, decodeNum(value)))
+                    learn(p4info_helper, sw, eth_src, decodeNum(value))
+                else:
+                    print("Packet type not implemented")
+
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='CSV outputfile')
-    parser.add_argument('--o', help='output CSV file name',
-                        type=str, action="store", required=False,
-                        default=os.devnull)
-    args = parser.parse_args()
-    if args.o != os.devnull:
-        args.o = "../data/%s.csv" % args.o
-    main(args.o)
+    main()

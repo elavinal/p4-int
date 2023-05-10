@@ -46,11 +46,19 @@ control SwitchIngress(inout headers hdr,
 
     apply {
         if(hdr.ipv4.isValid()){
-            hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-            if(hdr.int_md_shim.isValid()){
-                clone_packet();
+          if(hdr.int_md_shim.isValid() 
+           && hdr.int_md_header.isValid()
+           && (hdr.int_md_header.flags & HOP_COUNT_EXCEEDED == 0b000)
+        ) {
+            
+             int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
+            if(instructions & NODE_ID != 0){
+                digest<switchID_t>(1,hdr.node_id.node_id);
             }
-            ipv4_lpm.apply();
+              
+        
         }
+        ipv4_lpm.apply();
     }
 }
+                       }
