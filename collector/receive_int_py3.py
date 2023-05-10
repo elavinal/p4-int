@@ -212,7 +212,7 @@ def main():
     sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
             name='s4',
             address='127.0.0.1:50054',
-            device_id=0,
+            device_id=3,
             proto_dump_file='logs/s4-p4runtime-requests.txt')
     sw.MasterArbitrationUpdate()
 
