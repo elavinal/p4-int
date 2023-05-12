@@ -6,13 +6,10 @@ import os
 import json
 import csv
 import argparse
+from scapy.all import *
 
 
 from datetime import datetime
-from scapy.all import sniff, sendp, hexdump, get_if_list, get_if_hwaddr
-from scapy.all import Packet, IPOption
-from scapy.all import ByteField, PacketListField, ShortField, IntField, LongField, BitField, FieldListField, FieldLenField
-from scapy.all import IP, TCP, UDP, Raw
 from scapy.layers.inet import TCP, UDP, bind_layers
 import grpc
 # sys.path.append(
@@ -174,8 +171,7 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
 
 
 
-def handle_pkt(pkt, writer):
-
+def handle_pkt(pkt):
     if TCP in pkt and pkt[IP].tos == 0x5C:
         print("\n\n********* Receiving Telemtry Report ********")
         
@@ -184,7 +180,7 @@ def handle_pkt(pkt, writer):
                        #pkt[Raw].load.decode('cp1250'),
                        str(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4], 'utf-8', 'ignore'), 
                        int(pkt[INTShim].int_length-3)*4, 
-                       int(pkt[INTMD].HopMetaLength)*4, writer)
+                       int(pkt[INTMD].HopMetaLength)*4)
         pkt.show()
     if UDP in pkt and pkt[IP].tos == 0x5C:
         print("\n\n********* Receiving Telemtry Report ********")
@@ -194,10 +190,16 @@ def handle_pkt(pkt, writer):
                        #pkt[Raw].load.decode('cp1250'),
                        str(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4], 'utf-8', 'ignore'), 
                        int(pkt[INTShim].int_length-3)*4, 
-                       int(pkt[INTMD].HopMetaLength)*4, writer)
+                       int(pkt[INTMD].HopMetaLength)*4)
         pkt.show()
         hexdump(pkt)
-
+def handle_pkt2(pkt):
+    if IP in pkt:
+        if TCP in pkt or UDP in pkt:
+            print( "got a packet")
+            pkt.show2()
+            hexdump(pkt)
+            sys.stdout.flush()
 def main():
     workdir = '.' 
     print('Using P4Info file %s' % 'build/basic_switch.p4.p4info.txt')
@@ -227,22 +229,17 @@ def main():
             if packetin.WhichOneof('update') == 'packet':
                 print("Received Packet-in")
                 raw_packet = packetin.packet.payload
-                # print(packet)
-                scapy_pkt = Ether(raw_packet)
-                # scapy_pkt.show()
-                ether_type = scapy_pkt.type
-                eth_src = scapy_pkt.src
-                # if packet is IPv4 or ARP
-                if ether_type == 0x0800 or ether_type == 0x0806:
-                    metadata = packetin.packet.metadata 
-                    for meta in metadata:
-                        id = meta.metadata_id 
-                        value = meta.value
-                        print("id " + str(id) + " value " + str(value))
-                    print("*** Learning from %s on port %d ***" % (eth_src, decodeNum(value)))
-                    learn(p4info_helper, sw, eth_src, decodeNum(value))
-                else:
-                    print("Packet type not implemented")
+                print(raw_packet)
+                list(raw_packet)
+                metadata = packetin.packet.metadata 
+                for meta in metadata:
+                    id = meta.metadata_id 
+                    value = meta.value
+                    print("id " + str(id) + " value " + str(value))
+                #     print("*** Learning from %s on port %d ***" % (eth_src, decodeNum(value)))
+                #     learn(p4info_helper, sw, eth_src, decodeNum(value))
+                # else:
+                #     print("Packet type not implemented")
 
 
 if __name__ == '__main__':

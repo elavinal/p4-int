@@ -11,6 +11,7 @@ control SwitchEgress(inout headers hdr,
     action add_node_id(switchID_t switch_id) {
         hdr.node_id.setValid();
         hdr.node_id.node_id = switch_id;
+        meta.node_id = switch_id;
     }
 
     //Creates Level 1 Ingress and Egress Interface IDs header

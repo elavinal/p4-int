@@ -23,6 +23,7 @@ control SwitchEgress(inout headers hdr,
         hdr.node_id.setValid();
         hdr.node_id.node_id = switch_id;
         hdr.tel_rep_group_header.node_id = switch_id;
+        meta.node_id = switch_id;
     }
 
     //Creates Level 1 Ingress and Egress Interface IDs header
@@ -112,13 +113,6 @@ control SwitchEgress(inout headers hdr,
         hdr.tel_rep_group_header.node_id= 3;
         seq_number.read(hdr.tel_rep_group_header.seq_number, 0);
         increment_counter();
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen  - 4 ; //coupe barbare , il faudra trouver la vrai source du pb
-        hdr.udp.setValid();
-        hdr.udp.srcPort = hdr.tcp.srcPort;
-        hdr.udp.dstPort = hdr.tcp.dstPort;
-        hdr.tcp.setInvalid();
-        hdr.udp.len = hdr.ipv4.totalLen - (bit<16>) hdr.ipv4.ihl -19  ; //coupe barbare , il faudra trouver la vrai source du pb
-        hdr.ipv4.protoType = TYPE_UDP;
 
     }
         

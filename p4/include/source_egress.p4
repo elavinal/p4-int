@@ -42,6 +42,7 @@ control SwitchEgress(inout headers hdr,
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
         hdr.int_md_shim.len = hdr.int_md_shim.len + 1;
         hdr.int_md_header.hopMetaLength = hdr.int_md_header.hopMetaLength + 1;
+        meta.node_id = switch_id;
     }
 
     //Creates Level 1 Ingress and Egress interface IDs header

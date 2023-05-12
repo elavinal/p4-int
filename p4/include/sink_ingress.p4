@@ -15,7 +15,7 @@ control SwitchIngress(inout headers hdr,
     }
 
     action clone_packet() {
-        clone_preserving_field_list(CloneType.I2E, REPORT_MIRROR_SESSION_ID, 1);
+        clone(CloneType.I2E, REPORT_MIRROR_SESSION_ID);
     }
 /* -- Outdated --  
     action reroute_int(ipv4Addr_t mon_addr) {
@@ -46,11 +46,14 @@ control SwitchIngress(inout headers hdr,
 
     apply {
         if(hdr.ipv4.isValid()){
-            hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
-            if(hdr.int_md_shim.isValid()){
-                clone_packet();
-            }
-            ipv4_lpm.apply();
+        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+          if(hdr.int_md_shim.isValid() 
+           && hdr.int_md_header.isValid()
+           && (hdr.int_md_header.flags & HOP_COUNT_EXCEEDED == 0b000)
+        ) {
+            clone_packet();
         }
+        ipv4_lpm.apply();
     }
 }
+                       }

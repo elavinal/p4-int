@@ -79,6 +79,7 @@ header metadata_extractor_t {
 
 struct metadata {
     @field_list(1)
+    switchID_t node_id;
     parser_metadata_t parser_metadata;
 }
 
