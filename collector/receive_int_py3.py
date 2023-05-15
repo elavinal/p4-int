@@ -224,22 +224,23 @@ def main():
     print("connexion au switch effectué")
     while True:
             print("Attente packet")
-            packetin = sw.PacketIn()
-            print("packet reçu")
-            if packetin.WhichOneof('update') == 'packet':
+            stream_msg_resp = sw.StreamMessageIn()
+            print("*** StreamMessageResponse ***")
+            if stream_msg_resp.WhichOneof('update') == 'packet':
                 print("Received Packet-in")
-                raw_packet = packetin.packet.payload
+                raw_packet = stream_msg_resp.packet.payload
                 print(raw_packet)
                 list(raw_packet)
-                metadata = packetin.packet.metadata 
+                metadata = stream_msg_resp.packet.metadata 
                 for meta in metadata:
                     id = meta.metadata_id 
                     value = meta.value
                     print("id " + str(id) + " value " + str(value))
-                #     print("*** Learning from %s on port %d ***" % (eth_src, decodeNum(value)))
-                #     learn(p4info_helper, sw, eth_src, decodeNum(value))
-                # else:
-                #     print("Packet type not implemented")
+            # elif stream_msg_resp.WhichOneof('update') == 'digest':
+            #     print("Received Digest")
+            #     digest_list = stream_msg_resp.digest
+            #     for data in digest_list.data:
+            #     print(data)
 
 
 if __name__ == '__main__':
