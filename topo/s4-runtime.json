@@ -53,11 +53,5 @@
                 "port": 2
             }
         }
-    ],
-    "clone_session_entries": [
-        {
-          "clone_session_id": 500,
-          "replicas": [ {"egress_port": 1, "instance": 1} ]
-        }
-      ]
+    ]
 }

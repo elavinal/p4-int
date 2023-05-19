@@ -75,9 +75,26 @@ header buffer_id_occupancy_t {
 header metadata_extractor_t {
     bit<32> md_word;
 }
+struct int_headers_t {
+    // tel_rep_group_header_ta tel_rep_group_header;
+
+    bit<4>  version; // This spec defines 2
+    bit<6>  hw_id; // to identify NIC
+    bit<22> seq_number; // to be stored in a register and incremented 
+    switchID_t node_idE;
+
+    bit<4>  type;
+    bit<2>  nextProtocol;
+    bit<2>  rsv;
+    bit<8>  len;
+    bit<16> nptDependentField;
+
+    switchID_t node_idS;
+}
 
 struct metadata {
     parser_metadata_t parser_metadata;
+    int_headers_t int_headers;
 }
 
 struct headers {

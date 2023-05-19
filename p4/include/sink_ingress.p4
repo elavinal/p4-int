@@ -2,8 +2,9 @@
 
 control SwitchIngress(inout headers hdr,
                        inout metadata meta,
+    
                        inout standard_metadata_t standard_metadata) {
-
+    
     action drop(){
         mark_to_drop(standard_metadata);
     }
@@ -14,9 +15,7 @@ control SwitchIngress(inout headers hdr,
         hdr.ethernet.dstAddr = dstAddr;
     }
 
-    action clone_packet() {
-        clone(CloneType.I2E, REPORT_MIRROR_SESSION_ID);
-    }
+
 /* -- Outdated --  
     action reroute_int(ipv4Addr_t mon_addr) {
         hdr.ipv4.dstAddr = mon_addr;
@@ -53,7 +52,20 @@ control SwitchIngress(inout headers hdr,
             
              int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
             if(instructions & NODE_ID != 0){
-                digest<switchID_t>(1,hdr.node_id.node_id);
+
+                meta.int_headers.version = hdr.tel_rep_group_header.version;
+                meta.int_headers.hw_id = hdr.tel_rep_group_header.hw_id;
+                meta.int_headers.seq_number = hdr.tel_rep_group_header.seq_number;
+                meta.int_headers.node_idE = hdr.tel_rep_group_header.node_id;  
+
+                meta.int_headers.type = hdr.int_md_shim.type;
+                meta.int_headers.nextProtocol = hdr.int_md_shim.nextProtocol;
+                meta.int_headers.rsv = hdr.int_md_shim.rsv;
+                meta.int_headers.len = hdr.int_md_shim.len;
+                meta.int_headers.nptDependentField = hdr.int_md_shim.nptDependentField;
+                meta.int_headers.node_idS = hdr.node_id.node_id;
+                
+                digest<int_headers_t>(1,meta.int_headers);
             }
               
         

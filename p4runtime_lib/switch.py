@@ -35,7 +35,7 @@ def ShutdownAllSwitchConnections():
 
 class SwitchConnection(object):
 
-    def __init__(self, name=None, address='127.0.0.1:50054', device_id=3,
+    def __init__(self, name=None, address='127.0.0.1:50051', device_id=0,
                  proto_dump_file=None):
         self.name = name
         self.address = address
@@ -135,7 +135,7 @@ class SwitchConnection(object):
             for response in self.client_stub.Read(request):
                 yield response
 
-    # EDIT EL
+   # EDIT EL
     def ReadDirectCounters(self, table_id=None, dry_run=False):
         request = p4runtime_pb2.ReadRequest()
         request.device_id = self.device_id
@@ -163,14 +163,34 @@ class SwitchConnection(object):
         else:
             self.client_stub.Write(request)
     
-    # EDIT EL   
-    def PacketIn(self, dry_run=False, **kwargs):
+    # EDIT EL
+    # default max_timeout_ns 1 ms, max_list_size 1, ack_timeout_ns 10 ms
+    def WriteDigestEntry(self, digest_id, max_timeout_ns=1000000,
+                         max_list_size=1, ack_timeout_ns=10000000, dry_run=False):
+        request = p4runtime_pb2.WriteRequest()
+        request.device_id = self.device_id
+        request.election_id.low = 1
+        update = request.updates.add()
+        update.type = p4runtime_pb2.Update.INSERT
+        update.entity.digest_entry.digest_id = digest_id
+        update.entity.digest_entry.config.max_timeout_ns = max_timeout_ns
+        update.entity.digest_entry.config.max_list_size = max_list_size
+        update.entity.digest_entry.config.ack_timeout_ns = ack_timeout_ns
+        if dry_run:
+            print("P4Runtime Enable digest %s on switch %s" % (digest_id, self.device_id))
+        else:
+            self.client_stub.Write(request)
+
+    # EDIT EL
+    def StreamMessageIn(self, dry_run=False, **kwargs):
+        # empty StreamMessageRequest
         request = p4runtime_pb2.StreamMessageRequest()
         if dry_run:
-            print("P4 Runtime PacketIn: ", request) 
+            print("P4 Runtime Read StreamMessage ", request)
         else:
             self.requests_stream.put(request)
             for item in self.stream_msg_resp:
+                # item should be a StreamMessageResponse
                 return item
 
 class GrpcRequestLogger(grpc.UnaryUnaryClientInterceptor,

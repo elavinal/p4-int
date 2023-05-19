@@ -207,42 +207,31 @@ def main():
     
     # Instantiate a P4Runtime helper from the p4info file
     p4info_helper = p4runtime_lib.helper.P4InfoHelper(p4info_file_path)
-
+    
 
     sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
             name='s4',
             address='127.0.0.1:50054',
-            device_id=0,
-            proto_dump_file='logs/s4-2-p4runtime-requests.txt')
+            device_id=3,
+            proto_dump_file='logs/s4-p4runtime-requests.txt')
     sw.MasterArbitrationUpdate()
 
         # Install the P4 program (bmv2_json_file_path) on the switch 
-    # sw.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,
-    #                                    bmv2_json_file_path=bmv2_file_path)
+    #sw.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,bmv2_json_file_path=bmv2_file_path)
+
+    print("Writing DigestEntry")
+    sw.WriteDigestEntry(digest_id=394431807)
+
     print("connexion au switch effectué")
     while True:
-            print("Attente packet")
-            packetin = sw.PacketIn()
-            print("packet reçu")
-            if packetin.WhichOneof('update') == 'digest':
-                print("Received Packet-in")
-                raw_packet = packetin.packet.payload
-                # print(packet)
-                scapy_pkt = Ether(raw_packet)
-                # scapy_pkt.show()
-                ether_type = scapy_pkt.type
-                eth_src = scapy_pkt.src
-                # if packet is IPv4 or ARP
-                if ether_type == 0x0800 or ether_type == 0x0806:
-                    metadata = packetin.packet.metadata 
-                    for meta in metadata:
-                        id = meta.metadata_id 
-                        value = meta.value
-                        print("id " + str(id) + " value " + str(value))
-                    print("*** Learning from %s on port %d ***" % (eth_src, decodeNum(value)))
-                    learn(p4info_helper, sw, eth_src, decodeNum(value))
-                else:
-                    print("Packet type not implemented")
+        print("Attente packet")
+        stream_msg_resp = sw.StreamMessageIn()
+        print("packet reçu")
+        if stream_msg_resp.WhichOneof('update') == 'digest':
+            print("Received Digest")
+            digest_list = stream_msg_resp.digest
+            for data in digest_list.data:
+                print(data)
 
 
 if __name__ == '__main__':
