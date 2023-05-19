@@ -88,7 +88,6 @@ struct headers {
     ipv4_t                               ipv4;
     tcp_t                                tcp;
     udp_t                                udp;
-    int_headers_t                        int_headers;
     tel_rep_group_header_t               tel_rep_group_header;
     int_md_shim_t                        int_md_shim;
     int_md_header_t                      int_md_header;
@@ -101,14 +100,8 @@ struct headers {
     lv2_if_id_t                          lv2_if_id;
     eg_if_tx_util_t                      eg_if_tx_util;
     buffer_id_occupancy_t                buffer_id_occupancy;
-    metadata_extractor_t[MAX_MD_WORDS]   metadata_extractor
+    metadata_extractor_t[MAX_MD_WORDS]   metadata_extractor;
 }
 
-struct int_headers_t {
-    tel_rep_group_header_t               tel_rep_group_header;
-    int_md_shim_t                        int_md_shim;
-    int_md_header_t                      int_md_header;
-    node_id_t                            node_id;
-}
 
 #endif
