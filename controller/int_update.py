@@ -173,13 +173,21 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
             #Source rules
             setup_source_instructions(switch, config_file, p4info_helper)
         elif switch_role == SINK:
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchIngress.trgh",
+                match_fields={
+                    
+                },
+                action_name="SwitchIngress.trgh_digest",
+                action_params={
+                    "switch_id": int(switch_name[1]),
+                }
+            ) 
+            switch.WriteTableEntry(table_entry)
             #Sink rules
             push_rules("topo/sink_rules.json", switch, p4info_helper)
-            # print("Writing DigestEntry to SINK")
-            # switch.WriteDigestEntry(digest_id=399285173) # 394431807
-            # print("Attente packet")
-            # stream_msg_resp = switch.StreamMessageIn()
-            # print("packet reçu")
+            print("Writing DigestEntry to SINK")
+            switch.WriteDigestEntry(digest_id=399285173)
 
     except grpc.RpcError as e:
         printGrpcError(e)

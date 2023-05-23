@@ -174,64 +174,41 @@ def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writ
 
 
 
-def handle_pkt(pkt, writer):
-
-    if TCP in pkt and pkt[IP].tos == 0x5C:
-        print("\n\n********* Receiving Telemtry Report ********")
-        
-        parse_metadata(pkt,
-                       int(pkt[INTMD].Instructions), 
-                       #pkt[Raw].load.decode('cp1250'),
-                       str(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4], 'utf-8', 'ignore'), 
-                       int(pkt[INTShim].int_length-3)*4, 
-                       int(pkt[INTMD].HopMetaLength)*4, writer)
-        pkt.show()
-    if UDP in pkt and pkt[IP].tos == 0x5C:
-        print("\n\n********* Receiving Telemtry Report ********")
-        
-        parse_metadata(pkt,
-                       int(pkt[INTMD].Instructions), 
-                       #pkt[Raw].load.decode('cp1250'),
-                       str(pkt[Raw].load[:(pkt[INTShim].int_length-3)*4], 'utf-8', 'ignore'), 
-                       int(pkt[INTShim].int_length-3)*4, 
-                       int(pkt[INTMD].HopMetaLength)*4, writer)
-        pkt.show()
-        hexdump(pkt)
+def handle(digest_list):
+    index = 0
+    data = digest_list.data[index]
+    print(type(data))
+    print(type(data.struct))
+    print(type(data.struct.members))
+    print(data.struct.members)
+    print("*** Parsing Telemetry report Group ***")
+    version = data.struct.members[0].bitstring
+    print("Version :" + version.hex()) 
 
 def main():
-    workdir = '.' 
-    print('Using P4Info file %s' % 'build/sink_switch.p4.p4info.txt')
-    p4info_file_path = os.path.join(workdir,'build/sink_switch.p4.p4info.txt')
-    print('Using BMv2 json file %s' % 'build/sink_switch.json')
-    bmv2_file_path = os.path.join(workdir,'build/sink_switch.json')
     
-    # Instantiate a P4Runtime helper from the p4info file
-    p4info_helper = p4runtime_lib.helper.P4InfoHelper(p4info_file_path)
+    try:
+        sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
+                name='s4',
+                address='127.0.0.1:50054',
+                device_id=3,
+                proto_dump_file='logs/s4-p4runtime-stream.txt')
+        sw.MasterArbitrationUpdate()
+
+
+        print("connexion au switch effectué")
+        while True:
+            print("Attente packet")
+            stream_msg_resp = sw.StreamMessageIn()
+            print("packet reçu")
+            if stream_msg_resp.WhichOneof('update') == 'digest':
+                print("Received Digest")
+                digest_list = stream_msg_resp.digest
+                handle(digest_list)
+
     
-
-    sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
-            name='s4',
-            address='127.0.0.1:50054',
-            device_id=3,
-            proto_dump_file='logs/s4-p4runtime-requests.txt')
-    sw.MasterArbitrationUpdate()
-
-        # Install the P4 program (bmv2_json_file_path) on the switch 
-    #sw.SetForwardingPipelineConfig(p4info=p4info_helper.p4info,bmv2_json_file_path=bmv2_file_path)
-
-    print("Writing DigestEntry")
-    sw.WriteDigestEntry(digest_id=394431807)
-
-    print("connexion au switch effectué")
-    while True:
-        print("Attente packet")
-        stream_msg_resp = sw.StreamMessageIn()
-        print("packet reçu")
-        if stream_msg_resp.WhichOneof('update') == 'digest':
-            print("Received Digest")
-            digest_list = stream_msg_resp.digest
-            for data in digest_list.data:
-                print(data)
+    except grpc.RpcError as e:
+        printGrpcError(e)
 
 
 if __name__ == '__main__':
