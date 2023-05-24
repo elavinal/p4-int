@@ -24,17 +24,18 @@ import yaml
 from p4runtime_lib.convert import decodeNum
 
 
+def hexToBitMap(Hex):
+    scale = 16 ## equals to hexadecimal
+    num_of_bits = 16
+    return bin(int(Hex, scale))[2:].zfill(num_of_bits)
+
 
 
 def handle(digest_list):
     index = 0
     data = digest_list.data[index]
-    print(type(data))
-    print(type(data.struct))
-    print(type(data.struct.members))
-    print(data.struct.members)
 
-    print("*** Parsing Telemetry report Group ***")
+    print("\n *** Parsing Telemetry report Group ***")
     version = data.struct.members[index].bitstring
     print("Version :" + version.hex())
     index+=1 
@@ -48,7 +49,7 @@ def handle(digest_list):
     print("IDSwitchEmission :" + switchEmission.hex()) 
     index+=1 
 
-    print("*** Parsing INT MD SHIM ***")
+    print("\n *** Parsing Individual Report Header ***")
     IntType = data.struct.members[index].bitstring
     print("ReportType :" + IntType.hex() + " // 01 = INT")
     index+=1 
@@ -68,9 +69,9 @@ def handle(digest_list):
     print("reserved :" + RSV.hex() + " // must be 0")
     index+=1 
 
-    print("*** Individual Report Main Content ***")
+    print("\n *** Individual Report Main Content ***")
     RepMDBits = data.struct.members[index].bitstring
-    print("BITMAP :" + RepMDBits.hex())
+    print("BITMAP :" + hexToBitMap(RepMDBits.hex()))
     index+=1 
     DomainSpecID = data.struct.members[index].bitstring
     print("DomainSpecID :" + DomainSpecID.hex())
