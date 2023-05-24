@@ -83,13 +83,17 @@ struct int_headers_t {
     bit<22> seq_number; // to be stored in a register and incremented 
     switchID_t node_idE;
 
-    bit<4>  type;
-    bit<2>  nextProtocol;
-    bit<2>  rsv;
-    bit<8>  len;
-    bit<16> nptDependentField;
+    bit<4>  RepType;
+    bit<4>  InType;
+    bit<8>  ReportLenght;
+    bit<8>  MDlength;
+    bit<4>  flags;
+    bit<4>  RSV;
 
-    switchID_t node_idS;
+    bit<16> RepMDBits;
+    bit<16> DomainSpecificId;
+    bit<16> DSMdBits;
+    bit<16> DSMdStatus;
 }
 
 struct metadata {
