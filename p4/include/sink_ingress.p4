@@ -77,11 +77,11 @@ control SwitchIngress(inout headers hdr,
             meta.int_headers.RepType = hdr.int_md_shim.type;
             meta.int_headers.InType = 0b0000;
             meta.int_headers.ReportLenght = hdr.int_md_shim.len;
-            meta.int_headers.len = hdr.int_md_header.hopMetaLength;
+            meta.int_headers.MDlength = hdr.int_md_header.hopMetaLength;
             meta.int_headers.flags = 0b0000;
             meta.int_headers.RSV = 0b0000;
 
-            meta.int_headers.RepMDBits = instructionBitmap;
+            meta.int_headers.RepMDBits = hdr.int_md_header.instructionBitmap;
             meta.int_headers.DomainSpecificId = 0;
             meta.int_headers.DSMdBits = 0;
             meta.int_headers.DSMdStatus = 0;
