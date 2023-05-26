@@ -187,7 +187,7 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
             #Sink rules
             push_rules("topo/sink_rules.json", switch, p4info_helper)
             print("Writing DigestEntry to SINK")
-            switch.WriteDigestEntry(digest_id=399285173)
+            switch.WriteDigestEntry(digest_list=[399285173,395192053])
 
     except grpc.RpcError as e:
         printGrpcError(e)

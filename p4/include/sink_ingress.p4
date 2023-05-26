@@ -6,6 +6,7 @@ control SwitchIngress(inout headers hdr,
                        inout standard_metadata_t standard_metadata) {
 
     register<bit<22>>(1) seq_number;
+    register<bit<8>>(1) clone_number;
 
     action drop(){
         mark_to_drop(standard_metadata);
@@ -72,6 +73,7 @@ control SwitchIngress(inout headers hdr,
            && hdr.int_md_header.isValid()
            && (hdr.int_md_header.flags & HOP_COUNT_EXCEEDED == 0b000)
         ) { 
+            if (standard_metadata.instance_type == 0) {
             trgh.apply();
 
             meta.int_headers.RepType = hdr.int_md_shim.type;
@@ -87,16 +89,41 @@ control SwitchIngress(inout headers hdr,
             meta.int_headers.DSMdStatus = 0;
 
                 
-            digest<int_headers_t>(1,meta.int_headers);            
-            
-             int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
-            if(instructions & NODE_ID != 0){
+            digest<int_headers_t>(1,meta.int_headers);
 
+            bit<8> init;
+            init = 0;
+            clone_number.write(0,init);  
+
+
+            resubmit_preserving_field_list((bit<8>)1);
             }
-              
-        
+            else{
+
+            bit<8> nbcl;
+            clone_number.read(nbcl,0);
+            if (nbcl == hdr.int_md_shim.len - 3){
+                drop();
+            }
+            else{
+            meta.int_metadata.int_metadata = hdr.metadata_extractor[nbcl].md_word;
+
+            digest<int_metadata_t>(1, meta.int_metadata);
+
+            bit<8> tempor;
+            clone_number.read(tempor,0);
+            tempor = tempor + 1;
+            clone_number.write(0,tempor);
+
+            
+            resubmit_preserving_field_list((bit<8>)1);
+    }
+            drop();  
+            }
+            
         }
         ipv4_lpm.apply();
     }
 }
-                       }
+}
+                       
