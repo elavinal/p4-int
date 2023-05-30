@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+from multiprocessing import Process, Queue
 import sys
 import struct
 import os
@@ -100,7 +100,7 @@ def handleStatic(digest_list,sw):
     handleDynamic(bitmap,nbMD,MDLenght,sw)
 
 def BitmapToStringTab(bitmap):
-    tab[String]
+    tab = []
     if(bitmap & NODE_ID):
         tab.append("node_id")
     if(bitmap & LVL1_IF_ID):
@@ -126,12 +126,13 @@ def BitmapToStringTab(bitmap):
 def handleDynamic(bitmap,nbMD,MDLenght,sw):
     print(bitmap)
     print(nbMD)
+    tab = BitmapToStringTab(bitmap)
 
     for j in range(2):
-        index = 0
         print("\n *** LECTURE METADATA  ***")
         for i in range(2):
-            print("attente packet")
+            index = 0
+            print("attente METADATA")
             stream_msg_resp = sw.StreamMessageIn()
             print("packet reçu")
             if stream_msg_resp.WhichOneof('update') == 'digest':
@@ -156,6 +157,7 @@ def main():
 
 
         print("connexion au switch effectué")
+        buffer = []
         while True:
             print("Attente packet")
             stream_msg_resp = sw.StreamMessageIn()
@@ -163,8 +165,12 @@ def main():
             if stream_msg_resp.WhichOneof('update') == 'digest':
                 print("Received Digest")
                 digest_list = stream_msg_resp.digest
-                
-                handleStatic(digest_list,sw)
+                print(digest_list)
+                # if (digest_list.digest_id == 399285173):
+                #     handleStatic(digest_list,sw)
+                # else : 
+                #     buffer.add(digest_list)
+
 
     
     except grpc.RpcError as e:
