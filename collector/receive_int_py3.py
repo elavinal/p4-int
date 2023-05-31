@@ -34,6 +34,8 @@ LVL2_IF_ID          = 0b1000000
 EG_IF_TX_UTIL       = 0b10000000
 BUFFER_ID_OCCUPANCY = 0b100000000
 
+StaticID = 399285173
+
 def hexToBitMap(Hex):
     scale = 16 # equals to hexadecimal
     num_of_bits = 16
@@ -150,7 +152,7 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain):
                     print("packet reçu")
                     if stream_msg_resp.WhichOneof('update') == 'digest':
                         digest_list = stream_msg_resp.digest
-                        if (digest_list.digest_id == 399285173):
+                        if (digest_list.digest_id == StaticID):
                             bufferMain.append(digest_list)
                         else:
                             if(digest_list.list_id == currentID):
@@ -190,7 +192,7 @@ def main():
                 if stream_msg_resp.WhichOneof('update') == 'digest':
                     print("Received Digest")
                     digest_list = stream_msg_resp.digest
-                    if (digest_list.digest_id == 399285173):
+                    if (digest_list.digest_id == StaticID):
                         handleStatic(digest_list,sw,bufferSub,bufferMain)
                     else : 
                         bufferSub.append(digest_list)
