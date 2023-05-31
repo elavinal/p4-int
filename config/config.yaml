@@ -6,14 +6,30 @@ transit:
   - s3
 sink:
   - s4
-collector: 10.0.2.2
+
 flows:
   - ipv4_dest: 10.0.4.4
+    ipv4_src: 10.0.1.1
     l4_proto: udp
     port_dest: 80
+    id: 3
+    frequency : 3 #1 of every 3 paquets 
+
   - ipv4_dest: 10.0.4.4
+    ipv4_src: 10.0.1.1
     l4_proto: tcp
     port_dest: 55555
+    id: 1
+    frequency : 3 #1 of every 3 paquets 
+
+  - ipv4_dest: 10.0.4.4
+    ipv4_src: 10.0.1.1
+    l4_proto: tcp
+    port_dest: 55556
+    id: 2
+    frequency : 2  #1 of every 2 paquets
+
+
 instructions:
   - node_id
   - hop_latency

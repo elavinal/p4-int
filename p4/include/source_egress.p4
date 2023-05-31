@@ -5,9 +5,28 @@ control SwitchEgress(inout headers hdr,
                      inout metadata meta,
                      inout standard_metadata_t standard_metadata) {
 
+    /********************  R E G I S T E R S ********************/
+    register<bit<32>>(10) sampling;
+    register<bit<32>>(1) tmpFrequency;
+    register<bit<32>>(1) tmpID;
+
+
     /********************  A C T I O N S ***********************/
 
+
+    action increment(bit<32> id, bit<32> frequency){
+         bit<32> tmp;
+         sampling.read(tmp,id);
+         tmp = tmp +1;
+         sampling.write(id,tmp);
+         tmpFrequency.write(0,frequency);
+         tmpID.write(0,id);
+    }
+
     action setup_int(int_instruction_t instructionBitmap) {
+       
+
+
         hdr.int_md_shim.setValid();
         hdr.int_md_shim.type = TYPE_INT_MD;
         hdr.int_md_shim.nextProtocol = 0;
@@ -33,6 +52,7 @@ control SwitchEgress(inout headers hdr,
         if(hdr.udp.isValid()) {
             hdr.udp.len = hdr.udp.len + 16;
         }
+        
     }
 
     //Creates the node_id header with matching metadata
@@ -133,6 +153,7 @@ control SwitchEgress(inout headers hdr,
     table add_int_hdr_udp {
         key = {
             hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : exact;
             hdr.udp.dstPort  : exact;
         }
         actions = {
@@ -145,6 +166,7 @@ control SwitchEgress(inout headers hdr,
     table add_int_hdr_tcp {
         key = {
             hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : exact;
             hdr.tcp.dstPort  : exact;
         }
         actions = {
@@ -253,12 +275,56 @@ control SwitchEgress(inout headers hdr,
         default_action = NoAction();
     }
 
-    apply {
-        if(hdr.tcp.isValid()) {
-            add_int_hdr_tcp.apply();
+table sampleUDP {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : exact;
+            hdr.udp.dstPort  : exact;
         }
-        if(hdr.udp.isValid()) {
-            add_int_hdr_udp.apply();
+        actions = {
+            increment;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+table sampleTCP {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.srcAddr : exact;
+            hdr.tcp.dstPort  : exact;
+        }
+        actions = {
+            increment;
+            NoAction;
+        }
+        default_action = NoAction();
+    }
+
+    apply {
+         if(hdr.tcp.isValid()) {
+                sampleTCP.apply();
+            }
+            if(hdr.udp.isValid()) {
+                sampleUDP.apply();
+            }
+        
+        bit<32> a;
+        bit<32> b;
+        bit<32> c;
+
+        tmpID.read(a,0);
+        tmpFrequency.read(b,0);
+        sampling.read(c,a);
+        
+        if(b == c){
+
+            if(hdr.tcp.isValid()) {
+                add_int_hdr_tcp.apply();
+            }
+            if(hdr.udp.isValid()) {
+                add_int_hdr_udp.apply();
+            }
+
         }
         //Adding all the required headers according to instruction bitmap
         if(hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {

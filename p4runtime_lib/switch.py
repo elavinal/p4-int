@@ -14,7 +14,7 @@
 #
 
 # EDIT E. Lavinal - Université de Toulouse (France)
-# Adding ReadDirectCounters and PacketIn methods
+# Adding ReadDirectCounters, StreamMessageIn and WriteDigestEntry methods
 
 from abc import abstractmethod
 from datetime import datetime
