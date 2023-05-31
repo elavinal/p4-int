@@ -149,7 +149,6 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain):
                     stream_msg_resp = sw.StreamMessageIn()
                     print("packet reçu")
                     if stream_msg_resp.WhichOneof('update') == 'digest':
-                        print("Received Digest")
                         digest_list = stream_msg_resp.digest
                         if (digest_list.digest_id == 399285173):
                             bufferMain.append(digest_list)
