@@ -1,7 +1,7 @@
 BUILD_DIR = build
 PCAP_DIR = pcaps
 LOG_DIR = logs
-LOG_LEVEL = debug
+LOG_LEVEL = trace
 DATA_DIR = data
 
 P4C = p4c-bm2-ss

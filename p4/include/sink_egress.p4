@@ -6,17 +6,8 @@ control SwitchEgress(inout headers hdr,
                       inout standard_metadata_t standard_metadata) {
 
 
-    /******************* R E G I S T E R S *********************/
-    register<bit<22>>(1) seq_number;
-
     /********************** A C T I O N S **********************/
 
-    action increment_counter() {
-        bit<22> tmp;
-        seq_number.read(tmp, 0);
-        tmp = tmp + 1;
-        seq_number.write(0, tmp);
-    }
 
     //Creates the node_id header
     action add_node_id(switchID_t switch_id) {
@@ -105,23 +96,6 @@ control SwitchEgress(inout headers hdr,
             hdr.int_md_header.flags = hdr.int_md_header.flags | HOP_COUNT_EXCEEDED; //this packet will no longer take information from ulterior station
         }
     }
-    action ToUDP(){
-        hdr.tel_rep_group_header.setValid();
-        hdr.tel_rep_group_header.version = 2;
-        hdr.tel_rep_group_header.hw_id = 0;
-        hdr.tel_rep_group_header.node_id= 3;
-        seq_number.read(hdr.tel_rep_group_header.seq_number, 0);
-        increment_counter();
-        hdr.ipv4.totalLen = hdr.ipv4.totalLen  - 4 ; //coupe barbare , il faudra trouver la vrai source du pb
-        hdr.udp.setValid();
-        hdr.udp.srcPort = hdr.tcp.srcPort;
-        hdr.udp.dstPort = hdr.tcp.dstPort;
-        hdr.tcp.setInvalid();
-        hdr.udp.len = hdr.ipv4.totalLen - (bit<16>) hdr.ipv4.ihl -19  ; //coupe barbare , il faudra trouver la vrai source du pb
-        hdr.ipv4.protoType = TYPE_UDP;
-
-    }
-        
     
 
     action restore_original() {
@@ -302,9 +276,6 @@ control SwitchEgress(inout headers hdr,
             update_int_hdrs.apply();
             if (standard_metadata.instance_type == 0 && hdr.int_md_shim.isValid()) {
             clear_int.apply();
-            }
-            else{
-                ToUDP();
             }
         }
     }

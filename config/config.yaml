@@ -32,6 +32,7 @@ flows:
 
 instructions:
   - node_id
+  - hop_latency
 # Possible metadata instructions:
 # - node_id
 # - lv1_if_id

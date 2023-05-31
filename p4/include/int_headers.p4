@@ -3,6 +3,11 @@
 #ifndef __INT_HEADERS__
 #define __INT_HEADERS__
 
+
+struct resubmit_meta_t {
+    @field_list(1)
+    bit<8> index;
+}
 header int_md_shim_t {
     bit<4>  type;
     bit<2>  nextProtocol;
@@ -73,11 +78,38 @@ header buffer_id_occupancy_t {
 }
 
 header metadata_extractor_t {
-    bit<32> md_word;
+    md_word_t md_word;
+}
+
+struct int_metadata_t {
+    md_word_t int_metadata;
+}
+struct int_headers_t {
+    // tel_rep_group_header_ta tel_rep_group_header;
+
+    bit<4>  version; // This spec defines 2
+    bit<6>  hw_id; // to identify NIC
+    bit<22> seq_number; // to be stored in a register and incremented 
+    switchID_t node_idE;
+
+    bit<4>  RepType;
+    bit<4>  InType;
+    bit<8>  ReportLenght;
+    bit<8>  MDlength;
+    bit<4>  flags;
+    bit<4>  RSV;
+
+    bit<16> RepMDBits;
+    bit<16> DomainSpecificId;
+    bit<16> DSMdBits;
+    bit<16> DSMdStatus;
 }
 
 struct metadata {
     parser_metadata_t parser_metadata;
+    int_headers_t int_headers;
+    int_metadata_t int_metadata;
+    resubmit_meta_t resubmit_meta;
 }
 
 struct headers {

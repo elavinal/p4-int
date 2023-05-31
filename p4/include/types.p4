@@ -8,6 +8,7 @@ typedef bit<16> int_instruction_t;
 typedef bit<9>  egressSpec_t;
 typedef bit<32> switchID_t;
 typedef bit<24> qdepth_t;
+typedef bit<32> md_word_t;
 
 struct parser_metadata_t {
     bit<8> remaining;

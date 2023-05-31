@@ -3,9 +3,6 @@
 import argparse
 import os, sys, json, subprocess, re, argparse
 import grpc
-# sys.path.append(
-#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
-#     'utils/'))
 # Import P4Runtime lib from current dir
 sys.path.append('.')
 import p4runtime_lib.bmv2
@@ -29,6 +26,7 @@ def push_rules(table_rules_file, switch, p4info_helper):
             p4controller.insertTableEntry(switch, entry, p4info_helper)
 
 def write_int_rules(table_name, action_name, p4info_helper, addr, switch):
+    print("Writing INT rule for table %s" % table_name)
     table_entry = p4info_helper.buildTableEntry(
         table_name=table_name,
         match_fields={
@@ -141,20 +139,25 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
         print("Installed P4 Program using SetForwardingPipelineConfig on %s" % switch_name)
         #Basic forwarding rules
         push_rules("topo/%s-runtime.json"% switch_name, switch, p4info_helper)
+        print("Pushed rules from topo/%s-runtime.json" % switch_name)
        
         for dest in config_file['flows']:
+            # TODO. get only the first address?
+            # in the current example, ok because only one IP dest addr...
             addr = dest['ipv4_dest']
-            table_entry = p4info_helper.buildTableEntry(
-                table_name="SwitchEgress.add_node_id_hdr",
-                match_fields={
-                    "hdr.ipv4.dstAddr": (addr, 32)
-                },
-                action_name="SwitchEgress.add_node_id",
-                action_params={
-                    "switch_id": int(switch_name[1]),
-                }
-            ) 
+
+        table_entry = p4info_helper.buildTableEntry(
+            table_name="SwitchEgress.add_node_id_hdr",
+            match_fields={
+                "hdr.ipv4.dstAddr": (addr, 32)
+            },
+            action_name="SwitchEgress.add_node_id",
+            action_params={
+                "switch_id": int(switch_name[1]),
+            }
+        ) 
         switch.WriteTableEntry(table_entry)
+ 
         write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
                         "SwitchEgress.add_lv1_if_id", 
                         p4info_helper, 
@@ -195,6 +198,7 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
                         p4info_helper, 
                         addr, 
                         switch)
+
         if switch_role != SOURCE:
             write_int_rules("SwitchEgress.update_int_hdrs",
                             "SwitchEgress.update_int_headers", 
@@ -206,16 +210,26 @@ def configure_switch(switch_name, switch_addr, device_id, p4file, switch_role, c
             #Source rules
             setup_source_instructions(switch, config_file, p4info_helper)
         elif switch_role == SINK:
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchIngress.trgh",
+                match_fields={
+                    
+                },
+                action_name="SwitchIngress.trgh_digest",
+                action_params={
+                    "switch_id": int(switch_name[1]),
+                }
+            ) 
+            switch.WriteTableEntry(table_entry)
             #Sink rules
             push_rules("topo/sink_rules.json", switch, p4info_helper)
-
-
+            print("Writing DigestEntry to SINK")
+            switch.WriteDigestEntry(digest_list=[399285173,395192053])
 
     except grpc.RpcError as e:
         printGrpcError(e)
 
     print("Shutting down.")
-
     ShutdownAllSwitchConnections()
 
 
@@ -237,7 +251,6 @@ def main(config_file):
             print("Setting up %s as sink" % switch)
             configure_switch(switch, "127.0.0.1:5005%s" % switch[1],
                              int(switch[1])-1, "build/sink_switch", SINK, config)
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Config file for INT')
