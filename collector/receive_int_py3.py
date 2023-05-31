@@ -41,7 +41,7 @@ def hexToBitMap(Hex):
 
 
 
-def handleStatic(digest_list,sw):
+def handleStatic(digest_list,sw,bufferSub,bufferMain):
     index = 0
     data = digest_list.data[index]
 
@@ -73,7 +73,7 @@ def handleStatic(digest_list,sw):
     index+=1 
     MDLenght = data.struct.members[index].bitstring
     print("Metadata Lenght :" + MDLenght.hex())
-    nbMD = int(MDLenght.hex(),16)
+    lenghtMD = int(MDLenght.hex(),16)
     index+=1 
     Flags = data.struct.members[index].bitstring
     print("Flags :" + Flags.hex() + " // (D)Dropped , (Q)Congested, (F)Tracked, (I) Intermediate")
@@ -97,7 +97,7 @@ def handleStatic(digest_list,sw):
     print("DomainSpecMD status  :" + DSMdStatus.hex())
     index+=1 
 
-    handleDynamic(bitmap,nbMD,MDLenght,sw)
+    handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain)
 
 def BitmapToStringTab(bitmap):
     tab = []
@@ -123,24 +123,49 @@ def BitmapToStringTab(bitmap):
 
 
 
-def handleDynamic(bitmap,nbMD,MDLenght,sw):
+def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain):
     print(bitmap)
     print(nbMD)
-    tab = BitmapToStringTab(bitmap)
+    #tab = BitmapToStringTab(bitmap)
+    MainNum = digest_id
+    MaxSubID = MainNum * nbMD
+    MinSubID = MaxSubID - nbMD + 1
+    currentID = MinSubID
+    nbloop = int(nbMD/MDLenght)
+    for i in range(nbloop):
+        print("Switch n°"  + str(i))
+        for k in range(MDLenght):
+            f = 0 
+            #print("Metadata "+ tab[k-1])
+            for j in bufferSub:
+                if (j.list_id == currentID):
+                    f = 1
+                    info = j
+                    bufferSub.remove(j)
+            if (f == 0):
+                q = 0
+                while(q == 0):
+                    print("Packet " + str(currentID) + " pas encore reçu, Attente")
+                    stream_msg_resp = sw.StreamMessageIn()
+                    print("packet reçu")
+                    if stream_msg_resp.WhichOneof('update') == 'digest':
+                        print("Received Digest")
+                        digest_list = stream_msg_resp.digest
+                        if (digest_list.digest_id == 399285173):
+                            bufferMain.append(digest_list)
+                        else:
+                            if(digest_list.list_id == currentID):
+                                info = digest_list
+                                q = 1
+                            else:
+                                bufferSub.append(digest_list)
+                    
+            
 
-    for j in range(2):
-        print("\n *** LECTURE METADATA  ***")
-        for i in range(2):
-            index = 0
-            print("attente METADATA")
-            stream_msg_resp = sw.StreamMessageIn()
-            print("packet reçu")
-            if stream_msg_resp.WhichOneof('update') == 'digest':
-                print("Received Digest")
-                digest_list = stream_msg_resp.digest
-                byteValue = digest_list.data[0].struct.members[index].bitstring
-                print(byteValue.hex())
-                index += 1
+            byteValue = info.data[0].struct.members[0].bitstring
+            print(byteValue.hex())
+            currentID = currentID + 1
+
     
 
     
@@ -155,21 +180,25 @@ def main():
                 proto_dump_file='logs/s4-p4runtime-stream.txt')
         sw.MasterArbitrationUpdate()
 
-
         print("connexion au switch effectué")
-        buffer = []
+        bufferSub = []
+        bufferMain = []
         while True:
-            print("Attente packet")
-            stream_msg_resp = sw.StreamMessageIn()
-            print("packet reçu")
-            if stream_msg_resp.WhichOneof('update') == 'digest':
-                print("Received Digest")
-                digest_list = stream_msg_resp.digest
-                print(digest_list)
-                # if (digest_list.digest_id == 399285173):
-                #     handleStatic(digest_list,sw)
-                # else : 
-                #     buffer.add(digest_list)
+            if(len(bufferMain) == 0):
+                print("Attente packet")
+                stream_msg_resp = sw.StreamMessageIn()
+                print("packet reçu")
+                if stream_msg_resp.WhichOneof('update') == 'digest':
+                    print("Received Digest")
+                    digest_list = stream_msg_resp.digest
+                    if (digest_list.digest_id == 399285173):
+                        handleStatic(digest_list,sw,bufferSub,bufferMain)
+                    else : 
+                        bufferSub.append(digest_list)
+            else:
+                digestlist = bufferMain[0]
+                handleStatic(digest_list,sw,bufferSub,bufferMain)
+                bufferMain.remove(0)
 
 
     
