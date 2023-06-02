@@ -41,7 +41,7 @@ def hexToBitMap(Hex):
 
 
 
-def handleStatic(digest_list,sw,bufferSub,bufferMain):
+def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
     index = 0
     data = digest_list.data[index]
 
@@ -97,7 +97,8 @@ def handleStatic(digest_list,sw,bufferSub,bufferMain):
     print("DomainSpecMD status  :" + DSMdStatus.hex())
     index+=1 
 
-    handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain)
+    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
+    return SavedID
 
 def BitmapToStringTab(bitmap):
     tab = []
@@ -123,14 +124,10 @@ def BitmapToStringTab(bitmap):
 
 
 
-def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain):
+def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID):
     print(bitmap)
     print(nbMD)
     #tab = BitmapToStringTab(bitmap)
-    MainNum = digest_id
-    MaxSubID = MainNum * nbMD
-    MinSubID = MaxSubID - nbMD + 1
-    currentID = MinSubID
     nbloop = int(nbMD/MDLenght)
     for i in range(nbloop):
         print("Switch n°"  + str(i))
@@ -164,6 +161,8 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain):
             byteValue = info.data[0].struct.members[0].bitstring
             print(byteValue.hex())
             currentID = currentID + 1
+    SavedID = currentID
+    return SavedID
 
     
 
@@ -182,21 +181,25 @@ def main():
         print("connexion au switch effectué")
         bufferSub = []
         bufferMain = []
+        currentID = 1
+        SavedID = 1
         while True:
+            currentID = SavedID
             if(len(bufferMain) == 0):
                 print("Attente packet")
                 stream_msg_resp = sw.StreamMessageIn()
                 print("packet reçu")
                 if stream_msg_resp.WhichOneof('update') == 'digest':
                     print("Received Digest")
+                    print(stream_msg_resp)
                     digest_list = stream_msg_resp.digest
                     if (digest_list.digest_id == 399285173):
-                        handleStatic(digest_list,sw,bufferSub,bufferMain)
+                        SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID)
                     else : 
                         bufferSub.append(digest_list)
             else:
                 digestlist = bufferMain[0]
-                handleStatic(digest_list,sw,bufferSub,bufferMain)
+                SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID)
                 bufferMain.remove(0)
 
 

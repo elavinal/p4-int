@@ -36,32 +36,32 @@ def write_int_rules(table_name, action_name, p4info_helper, addr, switch):
     switch.WriteTableEntry(table_entry)
 
 def setup_source_instructions(switch, config, p4info_helper):
-    instruction = 0
-    for instruct in config['instructions']:
-        if instruct == 'node_id':
-            instruction |= 0b1
-        if instruct == 'lv1_if_id':
-            instruction |= 0b10
-        if instruct == 'hop_latency':
-            instruction |= 0b100
-        if instruct == 'queue_id_occupancy':
-            instruction |= 0b1000
-        if instruct == 'ingress_timestamp':
-            instruction |= 0b10000
-        if instruct == 'egress_timestamp':
-            instruction |= 0b100000
-        if instruct == 'lv2_if_id':
-            instruction |= 0b1000000
-        if instruct == 'eg_if_tx_util':
-            instruction |= 0b10000000
-        if instruct == 'buffer_id_occupancy':
-            instruction |= 0b100000000
     for dest in config['flows']:
         dstAddr = dest['ipv4_dest']
         srcAddr = dest['ipv4_src']
         dstPort = dest['port_dest']
         flowId = dest['id']
         frequency = dest['frequency']
+        instruction = 0
+        for instruct in dest['instructions']:
+            if instruct == 'node_id':
+                instruction |= 0b1
+            if instruct == 'lv1_if_id':
+                instruction |= 0b10
+            if instruct == 'hop_latency':
+                instruction |= 0b100
+            if instruct == 'queue_id_occupancy':
+                instruction |= 0b1000
+            if instruct == 'ingress_timestamp':
+                instruction |= 0b10000
+            if instruct == 'egress_timestamp':
+                instruction |= 0b100000
+            if instruct == 'lv2_if_id':
+                instruction |= 0b1000000
+            if instruct == 'eg_if_tx_util':
+                instruction |= 0b10000000
+            if instruct == 'buffer_id_occupancy':
+                instruction |= 0b100000000
 
         if dest['l4_proto'] == 'tcp':
             table_entry = p4info_helper.buildTableEntry(
