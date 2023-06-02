@@ -84,7 +84,7 @@ control SwitchIngress(inout headers hdr,
             meta.int_headers.RSV = 0b0000;
 
             meta.int_headers.RepMDBits = (bit<16>)hdr.int_md_header.instructionBitmap;
-            meta.int_headers.DomainSpecificId = 0;
+            meta.int_headers.DomainSpecificId = hdr.int_md_header.domainSpecificId;
             meta.int_headers.DSMdBits = 0;
             meta.int_headers.DSMdStatus = 0;
 

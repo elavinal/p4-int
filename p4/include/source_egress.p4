@@ -45,7 +45,9 @@ control SwitchEgress(inout headers hdr,
         hdr.int_md_header.instructionBitmap = instructionBitmap;
         hdr.int_md_header.domainSpecificFlags = 0;
         hdr.int_md_header.domainSpecificInstructions = 0;
-        hdr.int_md_header.domainSpecificId = 0;
+        bit<32> d ;
+        tmpID.read(d,0);
+        hdr.int_md_header.domainSpecificId = (bit<16>) d;
 
         hdr.ipv4.dscp = CONTAINS_INT;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 16;
