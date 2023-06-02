@@ -22,7 +22,7 @@ flows:
     l4_proto: tcp
     port_dest: 55555
     id: 1
-    frequency : 1 #1 of every 3 paquets 
+    frequency : 2 #1 of every 3 paquets 
     instructions:
       - node_id
 

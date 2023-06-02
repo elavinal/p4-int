@@ -14,9 +14,9 @@ control SwitchEgress(inout headers hdr,
     /********************  A C T I O N S ***********************/
 
 
-    action increment(bit<32> id, bit<32> frequency){
+    action increment(bit<32> id, bit<32> frequency){ 
          bit<32> tmp;
-         sampling.read(tmp,id);
+         sampling.read(tmp,id); 
          tmp = tmp +1;
          sampling.write(id,tmp);
          tmpFrequency.write(0,frequency);
@@ -25,7 +25,7 @@ control SwitchEgress(inout headers hdr,
 
     action setup_int(int_instruction_t instructionBitmap) {
        
-
+        
 
         hdr.int_md_shim.setValid();
         hdr.int_md_shim.type = TYPE_INT_MD;
@@ -319,9 +319,11 @@ table sampleTCP {
         if(b == c){
 
             if(hdr.tcp.isValid()) {
+                sampling.write(a,0);
                 add_int_hdr_tcp.apply();
             }
             if(hdr.udp.isValid()) {
+                sampling.write(a,0);
                 add_int_hdr_udp.apply();
             }
 
