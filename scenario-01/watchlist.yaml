@@ -1,0 +1,38 @@
+# INT configuration
+# TODO: put INT config in another file?
+source:
+  - s1
+transit:
+  - s2
+sink:
+  - s3
+# Watchlist
+flows:
+  - id: 1
+    ipv4_dest: 10.0.2.2
+    ipv4_src: 10.0.1.1
+    l4_proto: tcp
+    port_dest: 55555
+    frequency : 2 #1 of every 2 paquets 
+    instructions:
+      - node_id
+  - id: 2
+    ipv4_dest: 10.0.2.2
+    ipv4_src: 10.0.1.1
+    l4_proto: tcp
+    port_dest: 55556
+    frequency : 2  #1 of every 2 paquets
+    instructions:
+      - node_id
+      - hop_latency
+
+# Possible metadata instructions:
+# - node_id
+# - lv1_if_id
+# - hop_latency
+# - queue_id_occupancy
+# - ingress_timestamp
+# - egress_timestamp
+# - lv2_if_id
+# - eg_if_tx_util
+# - buffer_id_occupancy

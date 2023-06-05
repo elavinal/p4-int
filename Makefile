@@ -1,4 +1,5 @@
 BUILD_DIR = build
+SRC_DIR = p4
 PCAP_DIR = pcaps
 LOG_DIR = logs
 LOG_LEVEL = trace
@@ -10,27 +11,46 @@ ifndef CONFIG
 CONFIG = config/config.yaml
 endif
 
+BASIC = $(BUILD_DIR)/basic_switch.json
+SOURCE = $(BUILD_DIR)/source_switch.json
+TRANSIT = $(BUILD_DIR)/transit_switch.json
+SINK = $(BUILD_DIR)/sink_switch.json
+
+# TO REMOVE
 all: run
 
+# TO REMOVE
 run: build
 	sudo -E python3 run_exercise.py -t topo/topology.json -b simple_switch_grpc -L $(LOG_LEVEL)
 #	sudo python controller/network_setup.py
 
+s01-run: build
+	sudo -E python3 run.py -t scenario-01/topology.json -b simple_switch_grpc -L $(LOG_LEVEL)
+
+s01-int:
+	sudo python3 controller/config_int.py --dir scenario-01
+
 stop:
 	sudo mn -c
 
-build: dirs
-	$(P4C) --p4v 16 --p4runtime-files $(BUILD_DIR)/basic_switch.p4.p4info.txt -o build/basic_switch.json p4/basic_switch.p4
-	$(P4C) --p4v 16 --p4runtime-files $(BUILD_DIR)/source_switch.p4.p4info.txt -o build/source_switch.json p4/source_switch.p4
-	$(P4C) --p4v 16 --p4runtime-files $(BUILD_DIR)/transit_switch.p4.p4info.txt -o build/transit_switch.json p4/transit_switch.p4
-	$(P4C) --p4v 16 --p4runtime-files $(BUILD_DIR)/sink_switch.p4.p4info.txt -o build/sink_switch.json p4/sink_switch.p4
+build: dirs $(BASIC) $(SOURCE) $(TRANSIT) $(SINK)
+
+# ex: p4c-bm2-ss --p4v 16
+#                --p4runtime-files build/source_switch.p4.p4info.txt
+#                -o build/source_switch.json
+#				 p4/source_switch.p4
+$(BUILD_DIR)/%.json: $(SRC_DIR)/%.p4 
+	$(P4C) --p4v 16 --p4runtime-files $(BUILD_DIR)/$*.p4.p4info.txt -o $@ $<
 
 dirs:
-	mkdir -p $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR) $(DATA_DIR)
+	@if [ ! -d $(BUILD_DIR) ]; then mkdir -p $(BUILD_DIR); fi
+	@if [ ! -d $(LOG_DIR) ]; then mkdir -p $(LOG_DIR); fi
+	@if [ ! -d $(PCAP_DIR) ]; then mkdir -p $(PCAP_DIR); fi
+	@if [ ! -d $(DATA_DIR) ]; then mkdir -p $(DATA_DIR); fi
 
+# TO REMOVE
 int:
 	sudo python3 controller/int_update.py --config $(CONFIG)
 
 clean: stop
-	rm -f *.pcap
 	rm -rf $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR) $(DATA_DIR)
