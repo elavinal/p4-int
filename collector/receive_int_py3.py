@@ -24,6 +24,7 @@ import yaml
 from p4runtime_lib.convert import decodeNum
 
 
+
 def hexToBitMap(Hex): 
     scale = 16 # equals to hexadecimal
     num_of_bits = 16 #llenght of the desired bitmap output
@@ -150,7 +151,7 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
                     print("packet reçu")
                     if stream_msg_resp.WhichOneof('update') == 'digest': # if the message received is a digest 
                         digest_list = stream_msg_resp.digest
-                        if (digest_list.digest_id == 399285173): #if the digest contain a static part
+                        if (digest_list.digest_id == StaticID): #if the digest contain a static part
                             bufferMain.append(digest_list) # it's stored in the bufferMain
                         else:
                             if(digest_list.list_id == currentID): #if the digest is the one with the currendID
@@ -210,8 +211,8 @@ def main():
                     print("Received Digest")
                     print(stream_msg_resp)
                     digest_list = stream_msg_resp.digest
-                    if (digest_list.digest_id == 399285173): #if it's a static part digest
-                        SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID) #we proceed it
+                    if (digest_list.digest_id == StaticID): #if it's a static part digest
+                        handleStatic(digest_list,sw,bufferSub,bufferMain) # we proceed it
                     else : 
                         bufferSub.append(digest_list) #otherwise we stock it in the bufferSub
             else: #if the bufferMain is not empty
