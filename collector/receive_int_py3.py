@@ -98,9 +98,13 @@ def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
     index+=1 
 
     SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
-    
     #SavedID store the last used digest_id from flexible digest
     #it will be stocked later, in the main loop in currentID to be used here. 
+
+    with open('./collector/export.csv', 'a', newline='') as csvfile:
+        fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writerow({'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'IDEmission': switchEmission.hex(), 'ReportType': IntType.hex(), 'InnerType': InnerType.hex(), 'Report_Lenght': ReportLenght.hex(), 'Meta_Lenght': MDLenght.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(), 'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
 
     return SavedID
 
@@ -161,6 +165,7 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
                                 info = digest_list # the correct digest is stocked 
                                 q = 1 #we don't have to search for the currentID digest no more 
                             else:
+                                print('paquet n°'+ str(digest_list.list_id)+ 'recu')
                                 bufferSub.append(digest_list) #otherwise it's stored in bufferSub
                     
             
@@ -189,15 +194,20 @@ def main():
 
         print("connexion au switch effectué")
         #instantiate buffer and global indexs
-        bufferSub = [] # buffer which contain the static part digests
-        bufferMain = [] # buffer which contain the metadata digests 
+        bufferSub = [] # buffer which contain static part digests
+        bufferMain = [] # buffer which contain metadata digests 
         currentID = 1 
         SavedID = 1
 
+        with open('./collector/export.csv', 'a', newline='') as csvfile:
+            fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
         #main loop 
         while True:
-            currentID = SavedID #currentID = the last currentID 
-            if(len(bufferMain) == 0): #if bufferMain is empty
+            currentID = SavedID # currentID = the last currentID 
+            if(len(bufferMain) == 0): # if bufferMain is empty
                 print("Attente packet")
                 stream_msg_resp = sw.StreamMessageIn() #listen()
                 print("packet reçu")
