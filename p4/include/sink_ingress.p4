@@ -68,14 +68,18 @@ control SwitchIngress(inout headers hdr,
   
 
     apply {
+        //if the paquet contain an int header
         if(hdr.ipv4.isValid()){
           if(hdr.int_md_shim.isValid() 
            && hdr.int_md_header.isValid()
            && (hdr.int_md_header.flags & HOP_COUNT_EXCEEDED == 0b000)
         ) { 
+            //if the paquet is a original and not cloned in any way  
             if (standard_metadata.instance_type == 0) {
+            //we instantiate the Telemetry Group Header  
             trgh.apply();
 
+            // fill int header with paquet information , the report format is similar to what we had to the paquet 
             meta.int_headers.RepType = hdr.int_md_shim.type;
             meta.int_headers.InType = 0b0000;
             meta.int_headers.ReportLenght = hdr.int_md_shim.len;
@@ -84,40 +88,46 @@ control SwitchIngress(inout headers hdr,
             meta.int_headers.RSV = 0b0000;
 
             meta.int_headers.RepMDBits = (bit<16>)hdr.int_md_header.instructionBitmap;
-            meta.int_headers.DomainSpecificId = 0;
+            meta.int_headers.DomainSpecificId = hdr.int_md_header.domainSpecificId;
             meta.int_headers.DSMdBits = 0;
             meta.int_headers.DSMdStatus = 0;
 
-                
+            //send to the collector the static/main part of the report
             digest<int_headers_t>(1,meta.int_headers);
 
+            //initiate the counter of clone made at 0 
             bit<8> init;
             init = 0;
             clone_number.write(0,init);  
 
-
+            //clone the paquet to Ingress
             resubmit_preserving_field_list((bit<8>)1);
             }
             else{
-
+            //if the paquet is a clone 
             bit<8> nbcl;
             clone_number.read(nbcl,0);
+            //we read the number of clone made so far 
             if (nbcl == hdr.int_md_shim.len - 3){
+                //if all clone needed were made , we drop the paquet and no more clone will be created
                 drop();
             }
             else{
+            //otherwise we read the metadata at the clone Index
             meta.int_metadata.int_metadata = hdr.metadata_extractor[nbcl].md_word;
-
+            //and send it to the collector
             digest<int_metadata_t>(1, meta.int_metadata);
 
+            //increase the clone counter
             bit<8> tempor;
             clone_number.read(tempor,0);
             tempor = tempor + 1;
             clone_number.write(0,tempor);
 
-            
+            //clone the paquet again in Ingress
             resubmit_preserving_field_list((bit<8>)1);
-    }
+    }       
+            //drop any clone 
             drop();  
             }
             
