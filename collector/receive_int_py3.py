@@ -24,16 +24,6 @@ import yaml
 from p4runtime_lib.convert import decodeNum
 
 
-NODE_ID             = 0b1
-LVL1_IF_ID          = 0b10
-HOP_LATENCY         = 0b100
-QUEUE_ID_OCCUPANCY  = 0b1000
-INGRESS_TIMESTAMP   = 0b10000
-EGRESS_TIMESTAMP    = 0b100000
-LVL2_IF_ID          = 0b1000000
-EG_IF_TX_UTIL       = 0b10000000
-BUFFER_ID_OCCUPANCY = 0b100000000
-
 def hexToBitMap(Hex): 
     scale = 16 # equals to hexadecimal
     num_of_bits = 16 #llenght of the desired bitmap output
@@ -97,37 +87,39 @@ def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
     print("DomainSpecMD status  :" + DSMdStatus.hex())
     index+=1 
 
-    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
-    #SavedID store the last used digest_id from flexible digest
-    #it will be stocked later, in the main loop in currentID to be used here. 
 
     with open('./collector/export.csv', 'a', newline='') as csvfile:
         fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writerow({'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'IDEmission': switchEmission.hex(), 'ReportType': IntType.hex(), 'InnerType': InnerType.hex(), 'Report_Lenght': ReportLenght.hex(), 'Meta_Lenght': MDLenght.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(), 'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
 
+
+    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
+    #SavedID store the last used digest_id from flexible digest
+    #it will be stocked later, in the main loop in currentID to be used here. 
+
     return SavedID
 
 #return a tab with all the attributes contain in the report by order 
 def BitmapToStringTab(bitmap):
     tab = []
-    if(bitmap & NODE_ID):
+    if(bitmap[15] == '1'):
         tab.append("node_id")
-    if(bitmap & LVL1_IF_ID):
+    if(bitmap[14] == '1'):
         tab.append("LVL1_IF_ID")
-    if(bitmap & HOP_LATENCY):
+    if(bitmap[13] == '1'):
         tab.append("HOP_LATENCY")
-    if(bitmap & QUEUE_ID_OCCUPANCY):
+    if(bitmap[12] == '1'):
         tab.append("QUEUE_ID_OCCUPANCY")
-    if(bitmap & INGRESS_TIMESTAMP):
+    if(bitmap[11] == '1'):
         tab.append("INGRESS_TIMESTAMP")
-    if(bitmap & EGRESS_TIMESTAMP):
+    if(bitmap[10] == '1'):
         tab.append("EGRESS_TIMESTAMP")
-    if(bitmap & LVL2_IF_ID):
+    if(bitmap[9] == '1'):
         tab.append("LVL2_IF_ID")
-    if(bitmap & EGRESS_TIMESTAMP):
+    if(bitmap[8] == '1'):
         tab.append("EG_IF_TX_UTIL")
-    if(bitmap & EGRESS_TIMESTAMP):
+    if(bitmap[7] == '1'):
         tab.append("BUFFER_ID_OCCUPANCY")
     return tab
 
@@ -136,7 +128,7 @@ def BitmapToStringTab(bitmap):
 def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID):
     print(bitmap)
     print(nbMD)
-    #tab = BitmapToStringTab(bitmap)
+    tab = BitmapToStringTab(bitmap)
 
     nbloop = int(nbMD/MDLenght) #nbloop = number of switch crossed
     for i in range(nbloop): # for each switch crossed 
@@ -172,6 +164,9 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
 
             byteValue = info.data[0].struct.members[0].bitstring #we extract the data from the correct digest
             print(byteValue.hex()) 
+            with open('./collector/export.csv', 'a', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([tab[k],byteValue.hex()])
             currentID = currentID + 1 # increment the currentID
 
     SavedID = currentID #once all loops end, we send back the last currentID used.
@@ -199,7 +194,7 @@ def main():
         currentID = 1 
         SavedID = 1
 
-        with open('./collector/export.csv', 'a', newline='') as csvfile:
+        with open('./collector/export.csv', 'w', newline='') as csvfile:
             fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
