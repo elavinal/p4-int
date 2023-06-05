@@ -34,15 +34,15 @@ LVL2_IF_ID          = 0b1000000
 EG_IF_TX_UTIL       = 0b10000000
 BUFFER_ID_OCCUPANCY = 0b100000000
 
-def hexToBitMap(Hex):
+def hexToBitMap(Hex): 
     scale = 16 # equals to hexadecimal
-    num_of_bits = 16
+    num_of_bits = 16 #llenght of the desired bitmap output
     return bin(int(Hex, scale))[2:].zfill(num_of_bits)
 
 
-
+# handle a digest with the static part of the report  
 def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
-    index = 0
+    index = 0 # will help us naviguate in the data 
     data = digest_list.data[index]
 
     print("\n *** Parsing Telemetry report Group ***")
@@ -69,7 +69,7 @@ def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
     ReportLenght = data.struct.members[index].bitstring
     print("Report Lenght :" + ReportLenght.hex())
     nbMD = int(ReportLenght.hex(),16)
-    nbMD = nbMD -3 #on enlève la taille int shim + int header
+    nbMD = nbMD -3 #minus the lenght of int shim + int header
     index+=1 
     MDLenght = data.struct.members[index].bitstring
     print("Metadata Lenght :" + MDLenght.hex())
@@ -98,8 +98,13 @@ def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
     index+=1 
 
     SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
+    
+    #SavedID store the last used digest_id from flexible digest
+    #it will be stocked later, in the main loop in currentID to be used here. 
+
     return SavedID
 
+#return a tab with all the attributes contain in the report by order 
 def BitmapToStringTab(bitmap):
     tab = []
     if(bitmap & NODE_ID):
@@ -123,45 +128,48 @@ def BitmapToStringTab(bitmap):
     return tab
 
 
-
+# handle all flexible part digests associated with the static part of the report  
 def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID):
     print(bitmap)
     print(nbMD)
     #tab = BitmapToStringTab(bitmap)
-    nbloop = int(nbMD/MDLenght)
-    for i in range(nbloop):
+
+    nbloop = int(nbMD/MDLenght) #nbloop = number of switch crossed
+    for i in range(nbloop): # for each switch crossed 
         print("Switch n°"  + str(i))
-        for k in range(MDLenght):
+        for k in range(MDLenght): #for each metadata collected by switch
             f = 0 
             #print("Metadata "+ tab[k-1])
-            for j in bufferSub:
-                if (j.list_id == currentID):
-                    f = 1
-                    info = j
-                    bufferSub.remove(j)
-            if (f == 0):
-                q = 0
+            for j in bufferSub: # we try to see if the digest with CurrentID is in our bufferSub
+                if (j.list_id == currentID): 
+                    f = 1 # if found , we dont need to listen and skip to the end of the loop 
+                    info = j # the correct digest is stocked 
+                    bufferSub.remove(j) # we remoove it from the buffer
+
+            if (f == 0): #if the currentID digest wasn't in the buffer 
+                q = 0 # exit boolean 
                 while(q == 0):
                     print("Packet " + str(currentID) + " pas encore reçu, Attente")
-                    stream_msg_resp = sw.StreamMessageIn()
+                    stream_msg_resp = sw.StreamMessageIn() #  listen to the sink connection
                     print("packet reçu")
-                    if stream_msg_resp.WhichOneof('update') == 'digest':
+                    if stream_msg_resp.WhichOneof('update') == 'digest': # if the message received is a digest 
                         digest_list = stream_msg_resp.digest
-                        if (digest_list.digest_id == 399285173):
-                            bufferMain.append(digest_list)
+                        if (digest_list.digest_id == 399285173): #if the digest contain a static part
+                            bufferMain.append(digest_list) # it's stored in the bufferMain
                         else:
-                            if(digest_list.list_id == currentID):
-                                info = digest_list
-                                q = 1
+                            if(digest_list.list_id == currentID): #if the digest is the one with the currendID
+                                info = digest_list # the correct digest is stocked 
+                                q = 1 #we don't have to search for the currentID digest no more 
                             else:
-                                bufferSub.append(digest_list)
+                                bufferSub.append(digest_list) #otherwise it's stored in bufferSub
                     
             
 
-            byteValue = info.data[0].struct.members[0].bitstring
-            print(byteValue.hex())
-            currentID = currentID + 1
-    SavedID = currentID
+            byteValue = info.data[0].struct.members[0].bitstring #we extract the data from the correct digest
+            print(byteValue.hex()) 
+            currentID = currentID + 1 # increment the currentID
+
+    SavedID = currentID #once all loops end, we send back the last currentID used.
     return SavedID
 
     
@@ -171,6 +179,7 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
 def main():
     
     try:
+        # instantiate swicth connection
         sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
                 name='s4',
                 address='127.0.0.1:50054',
@@ -179,27 +188,30 @@ def main():
         sw.MasterArbitrationUpdate()
 
         print("connexion au switch effectué")
-        bufferSub = []
-        bufferMain = []
-        currentID = 1
+        #instantiate buffer and global indexs
+        bufferSub = [] # buffer which contain the static part digests
+        bufferMain = [] # buffer which contain the metadata digests 
+        currentID = 1 
         SavedID = 1
+
+        #main loop 
         while True:
-            currentID = SavedID
-            if(len(bufferMain) == 0):
+            currentID = SavedID #currentID = the last currentID 
+            if(len(bufferMain) == 0): #if bufferMain is empty
                 print("Attente packet")
-                stream_msg_resp = sw.StreamMessageIn()
+                stream_msg_resp = sw.StreamMessageIn() #listen()
                 print("packet reçu")
-                if stream_msg_resp.WhichOneof('update') == 'digest':
+                if stream_msg_resp.WhichOneof('update') == 'digest': #if message is a digest
                     print("Received Digest")
                     print(stream_msg_resp)
                     digest_list = stream_msg_resp.digest
-                    if (digest_list.digest_id == 399285173):
-                        SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID)
+                    if (digest_list.digest_id == 399285173): #if it's a static part digest
+                        SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID) #we proceed it
                     else : 
-                        bufferSub.append(digest_list)
-            else:
-                digestlist = bufferMain[0]
-                SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID)
+                        bufferSub.append(digest_list) #otherwise we stock it in the bufferSub
+            else: #if the bufferMain is not empty
+                digestlist = bufferMain[0] # we pop the first one
+                SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID) #and proceed it 
                 bufferMain.remove(0)
 
 

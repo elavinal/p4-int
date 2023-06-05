@@ -6,9 +6,9 @@ control SwitchEgress(inout headers hdr,
                      inout standard_metadata_t standard_metadata) {
 
     /********************  R E G I S T E R S ********************/
-    register<bit<32>>(10) sampling;
-    register<bit<32>>(1) tmpFrequency;
-    register<bit<32>>(1) tmpID;
+    register<bit<32>>(10) sampling; //used as a table, contain flow id and its counter  
+    register<bit<32>>(1) tmpFrequency; //used a variable 
+    register<bit<32>>(1) tmpID; // same
 
 
     /********************  A C T I O N S ***********************/
@@ -16,17 +16,17 @@ control SwitchEgress(inout headers hdr,
 
     action increment(bit<32> id, bit<32> frequency){ 
          bit<32> tmp;
-         sampling.read(tmp,id); 
-         tmp = tmp +1;
-         sampling.write(id,tmp);
-         tmpFrequency.write(0,frequency);
-         tmpID.write(0,id);
+         sampling.read(tmp,id); //we go the the counter associated with id
+         tmp = tmp +1; //increment the counter
+         sampling.write(id,tmp); // write it
+         tmpFrequency.write(0,frequency); //stock the max frequency in a register 
+         tmpID.write(0,id); //stock the id in a register
     }
 
     action setup_int(int_instruction_t instructionBitmap) {
        
         
-
+         //initiate the int_shim headaer
         hdr.int_md_shim.setValid();
         hdr.int_md_shim.type = TYPE_INT_MD;
         hdr.int_md_shim.nextProtocol = 0;
@@ -39,12 +39,14 @@ control SwitchEgress(inout headers hdr,
         hdr.int_md_header.version = VERSION_INT_MD;
         hdr.int_md_header.flags = 0b000;
         hdr.int_md_header.rsv = 0x000;
-        //TODO : set hopMetaLength according to meta inserting tables
+        //initiate the int_md headaer
         hdr.int_md_header.hopMetaLength = 0;
         hdr.int_md_header.remainingHopCount = MAX_MD;
         hdr.int_md_header.instructionBitmap = instructionBitmap;
         hdr.int_md_header.domainSpecificFlags = 0;
         hdr.int_md_header.domainSpecificInstructions = 0;
+
+        //not spec intended but we write the flowID in int headers
         bit<32> d ;
         tmpID.read(d,0);
         hdr.int_md_header.domainSpecificId = (bit<16>) d;
@@ -310,24 +312,24 @@ table sampleTCP {
                 sampleUDP.apply();
             }
         
+
         bit<32> a;
         bit<32> b;
         bit<32> c;
 
-        tmpID.read(a,0);
-        tmpFrequency.read(b,0);
-        sampling.read(c,a);
+        tmpID.read(a,0); // a = tmp ID we just change in sampleTCP/UDP
+        tmpFrequency.read(b,0); // same for b 
+        sampling.read(c,a); // we check the counter with tmpID 
         
-        if(b == c){
-
+        if(b == c){ //if the max frequency fixed is equal to the counter
+            //we add int headers to the paquet
             if(hdr.tcp.isValid()) {
-                sampling.write(a,0);
                 add_int_hdr_tcp.apply();
             }
             if(hdr.udp.isValid()) {
-                sampling.write(a,0);
                 add_int_hdr_udp.apply();
             }
+            sampling.write(a,0); //reset the counter
 
         }
         //Adding all the required headers according to instruction bitmap
