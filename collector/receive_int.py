@@ -177,15 +177,16 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
 
     
 
-def main():
+def main(s):
     
     try:
+        idSwitch = int(s)-1 
         # instantiate swicth connection
         sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
-                name='s3',
-                address='127.0.0.1:50053',
-                device_id=2,
-                proto_dump_file='logs/s3-p4runtime-stream.txt')
+                name='s%s' % s,
+                address='127.0.0.1:5005%s' % s,
+                device_id=idSwitch, 
+                proto_dump_file='logs/s%s-p4runtime-stream.txt' % s) 
         sw.MasterArbitrationUpdate()
 
         print("connexion au switch effectué")
@@ -218,7 +219,7 @@ def main():
             else: #if the bufferMain is not empty
                 digestlist = bufferMain[0] # we pop the first one
                 SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) #and proceed it 
-                bufferMain.remove(0)
+                bufferMain.remove(digest_list)
 
 
     
@@ -227,4 +228,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser(description='id of the sink switch to connect to, exemple: --s 3 to connect to s3')
+    parser.add_argument('--s', help='number of the sink swicth to connect to, exemple: --s 3 to connect to s3',
+                        type=str, action="store", required=True)
+    args = parser.parse_args()
+    main(args.s)
