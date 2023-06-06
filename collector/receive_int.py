@@ -167,7 +167,10 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
             print(byteValue.hex()) 
             with open('./collector/export.csv', 'a', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([str(time.thread_time_ns()-t0),tab[k],byteValue.hex()])
+                string  = byteValue.hex()
+                alt = int(string,16)
+                
+                writer.writerow([str(time.thread_time_ns()-t0),tab[k],str(alt)])
             currentID = currentID + 1 # increment the currentID
 
     SavedID = currentID #once all loops end, we send back the last currentID used.
