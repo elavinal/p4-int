@@ -1,221 +1,230 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+from multiprocessing import Process, Queue
 import sys
 import struct
 import os
-
+import json
 import csv
 import argparse
+
+
 from datetime import datetime
-from scapy.all import sniff, sendp, hexdump, get_if_list, get_if_hwaddr
-from scapy.all import Packet, IPOption
-from scapy.all import ByteField, PacketListField, ShortField, IntField, LongField, BitField, FieldListField, FieldLenField
-from scapy.all import IP, TCP, UDP, Raw
-from scapy.layers.inet import TCP, bind_layers
+import grpc
+# sys.path.append(
+#     os.path.join(os.path.dirname(os.path.abspath(__file__)),
+#     'utils/'))
+# Import P4Runtime lib from current dir
+sys.path.append('.')
+import p4runtime_lib.bmv2
+from p4runtime_lib.error_utils import printGrpcError
+from p4runtime_lib.switch import ShutdownAllSwitchConnections
+import p4runtime_lib.helper
+import p4runtime_lib.simple_controller as p4controller
+import yaml
+from p4runtime_lib.convert import decodeNum
 
-UDP_META = 66
-TCP_META = 78
+StaticID = 399285173
 
-NODE_ID             = 0b1
-LVL1_IF_ID          = 0b10
-HOP_LATENCY         = 0b100
-QUEUE_ID_OCCUPANCY  = 0b1000
-INGRESS_TIMESTAMP   = 0b10000
-EGRESS_TIMESTAMP    = 0b100000
-LVL2_IF_ID          = 0b1000000
-EG_IF_TX_UTIL       = 0b10000000
-BUFFER_ID_OCCUPANCY = 0b100000000
-
-def get_if():
-    ifs=get_if_list()
-    iface=None
-    for i in get_if_list():
-        if "eth0" in i:
-            iface=i
-            break;
-    if not iface:
-        print "Cannot find eth0 interface"
-        exit(1)
-    return iface
-
-class INTMD(Packet):
-    name = "INT-MD_Header"
-    fields_desc =  [BitField("version", 0, 4),
-                    BitField("flags", 0, 3),
-                    BitField("reserved", 0, 12),
-                    BitField("HopMetaLength", 0, 5),
-                    BitField("RemainingHopCount", 0, 8),
-                    ShortField("Instructions", 0),
-                    ShortField("DomainFlags", 0),
-                    ShortField("DomainInstructions", 0),
-                    ShortField("DomainID", 0)]
-
-class INTShim(Packet):
-    name = "INT Shim header"
-    fields_desc = [BitField("type", 0, 4),
-                   BitField("next protocol", 0, 2),
-                   BitField("reserved", 0, 2),
-                   BitField("int_length", 0, 8),
-                   ShortField("NPT Dependent Field", 0)]
-
-class Tel_Rep_Grp_Hdr(Packet):
-    name = "Telemetry Report Group Header"
-    fields_desc = [BitField("version", 0, 4),
-                   BitField("Hardware ID", 0, 6),
-                   BitField("SequenceNumber", 0, 22),
-                   BitField("Node ID", 0, 32)]
-
-def extract_metadata(metadata, bytes, index):
-    value = 0
-    while bytes > 0:
-            multiplier = 2**(8*(bytes - 1))
-            value += ord(metadata[index])*multiplier
-            bytes -= 1
-            index += 1
-    return value
-
-def parse_metadata(pkt, instructions, metadata, meta_size, hop_meta_length, writer):
-    char_index = 0
-    meta_index = 0
-    data_row = ['N/A','N/A','N/A','N/A','N/A','N/A','N/A', 'N/A',
-                'N/A','N/A','N/A','N/A','N/A','N/A', 'N/A', 'N/A']
-    while meta_size > 0:
-        data_row[0]=datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-        meta_index += 1
-        print "\n------ Metadata %d ------" % meta_index
-        if(instructions & NODE_ID):
-            data = extract_metadata(metadata, 4, char_index)
-            print "node id : %d" % data
-            data_row[1] = data
-            char_index += 4
-        if(instructions & LVL1_IF_ID):
-            data = extract_metadata(metadata, 2, char_index)
-            char_index += 2
-            print "lv1 ingress interface id : %d" % data
-            data_row[2] = data
-            data = extract_metadata(metadata, 2, char_index)
-            char_index += 2       
-            print "lv1 egress interface id : %d" % data
-            data_row[3] = data
-        if(instructions & HOP_LATENCY):
-            data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
-            print "hop latency : %d microsec" % data
-            data_row[4] = data
-        if(instructions & QUEUE_ID_OCCUPANCY):
-            data = extract_metadata(metadata, 1, char_index)
-            char_index += 1
-            print "queue id : %d" %data
-            data_row[5] = data
-            data = extract_metadata(metadata, 3, char_index)
-            char_index += 3
-            print "queue occupancy : %d packet(s)" % data
-            data_row[6] = data
-        if(instructions & INGRESS_TIMESTAMP):
-            data = extract_metadata(metadata, 8, char_index)
-            char_index += 8
-            print"ingress timestamp : "
-            data_row[7] = data
-            print datetime.fromtimestamp(data)
-            print data
-        if(instructions & EGRESS_TIMESTAMP):
-            data = extract_metadata(metadata, 8, char_index)
-            char_index += 8
-            print "egress timestamp : %d" % data
-            data_row[8] = data
-        if(instructions & LVL2_IF_ID):
-            data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
-            print "lv2 ingress interface id : %d" % data
-            data_row[9] = data
-            data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
-            print "lv2 egress interface id : %d" % data
-            data_row[10] = data
-        if(instructions & EG_IF_TX_UTIL):
-            data = extract_metadata(metadata, 4, char_index)
-            char_index += 4
-            print "egress interface TX utilization : %d" % data
-            data_row[11] = data
-        if(instructions & BUFFER_ID_OCCUPANCY):
-            data = extract_metadata(metadata, 1, char_index)
-            char_index += 1
-            print "buffer id : %d" % data
-            data_row[12] = data
-            data = extract_metadata(metadata, 3, char_index)
-            char_index += 3
-            print "buffer occupancy : %d" % data
-            data_row[13] = data
-        meta_size -= hop_meta_length
-        if TCP in pkt:
-            print "TCP port : %d" % pkt[TCP].dport
-            data_row[14] = pkt[TCP].dport
-            data_row[15] = 'TCP'
-        if UDP in pkt: 
-            print "UDP port : %d" % pkt[UDP].dport
-            data_row[14] = pkt[UDP].dport
-            data_row[15] = 'UDP'
-        writer.writerow(data_row)
+def hexToBitMap(Hex): 
+    scale = 16 # equals to hexadecimal
+    num_of_bits = 16 #llenght of the desired bitmap output
+    return bin(int(Hex, scale))[2:].zfill(num_of_bits)
 
 
-#bind_layers(IP, INTShim, tos=0x17)
+# handle a digest with the static part of the report  
+def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
+    index = 0 # will help us naviguate in the data 
+    data = digest_list.data[index]
+
+    print("\n *** Parsing Telemetry report Group ***")
+    version = data.struct.members[index].bitstring
+    print("Version :" + version.hex())
+    index+=1 
+    hw_id = data.struct.members[index].bitstring
+    print("hw_id :" + hw_id.hex()) 
+    index+=1 
+    Sequence_number = data.struct.members[index].bitstring
+    print("Sequence number :" + Sequence_number.hex())
+    index+=1  
+    switchEmission = data.struct.members[index].bitstring
+    print("IDSwitchEmission :" + switchEmission.hex()) 
+    index+=1 
+
+    print("\n *** Parsing Individual Report Header ***")
+    IntType = data.struct.members[index].bitstring
+    print("ReportType :" + IntType.hex() + " // 01 = INT")
+    index+=1 
+    InnerType = data.struct.members[index].bitstring
+    print("InnerType :" + InnerType.hex() + " // 00 = No tunned Report")
+    index+=1 
+    ReportLenght = data.struct.members[index].bitstring
+    print("Report Lenght :" + ReportLenght.hex())
+    nbMD = int(ReportLenght.hex(),16)
+    nbMD = nbMD -3 #minus the lenght of int shim + int header
+    index+=1 
+    MDLenght = data.struct.members[index].bitstring
+    print("Metadata Lenght :" + MDLenght.hex())
+    lenghtMD = int(MDLenght.hex(),16)
+    index+=1 
+    Flags = data.struct.members[index].bitstring
+    print("Flags :" + Flags.hex() + " // (D)Dropped , (Q)Congested, (F)Tracked, (I) Intermediate")
+    index+=1 
+    RSV = data.struct.members[index].bitstring
+    print("reserved :" + RSV.hex() + " // must be 0")
+    index+=1 
+
+    print("\n *** Individual Report Main Content ***")
+    RepMDBits = data.struct.members[index].bitstring
+    bitmap = hexToBitMap(RepMDBits.hex())
+    print("BITMAP :" + bitmap)
+    index+=1 
+    DomainSpecID = data.struct.members[index].bitstring
+    print("DomainSpecID :" + DomainSpecID.hex())
+    index+=1 
+    DSMdBits = data.struct.members[index].bitstring
+    print("DomainSpec BITMAP :" + DSMdBits.hex())
+    index+=1 
+    DSMdStatus = data.struct.members[index].bitstring
+    print("DomainSpecMD status  :" + DSMdStatus.hex())
+    index+=1 
 
 
+    with open('./collector/export.csv', 'a', newline='') as csvfile:
+        fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writerow({'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'IDEmission': switchEmission.hex(), 'ReportType': IntType.hex(), 'InnerType': InnerType.hex(), 'Report_Lenght': ReportLenght.hex(), 'Meta_Lenght': MDLenght.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(), 'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
 
-def handle_pkt(pkt, writer, debug, seq_number):
-    if IP in pkt:
-        if debug == 'y':
-            pkt.show()
-        if UDP in pkt and pkt[IP].tos == 0x5C:
-            new_seq = pkt[Tel_Rep_Grp_Hdr].SequenceNumber
-            print "\n\n=========================="
-            print "[  Sequence number = %d   ]" % new_seq
-            print "=========================="
-            if seq_number == -1:
-                seq_number = new_seq
-            elif seq_number + 1 != new_seq:
-                print 'Telemetry report(s) lost (%d packets)' % (new_seq - seq_number)
-            parse_metadata(pkt,
-                        int(pkt[INTMD].Instructions), 
-                        str(pkt)[UDP_META:UDP_META+int(pkt[INTShim].int_length-3)*4], 
-                        int(pkt[INTShim].int_length-3)*4, 
-                        int(pkt[INTMD].HopMetaLength)*4, writer)    
-        #    print int(pkt[Metadata])
-        #    hexdump(pkt)
 
-def main(args, seq_number):
-    bind_layers(TCP, Tel_Rep_Grp_Hdr)
-    bind_layers(UDP, Tel_Rep_Grp_Hdr)
-    bind_layers(Tel_Rep_Grp_Hdr, INTShim)
-    bind_layers(INTShim, INTMD, type=1)
-    headers = ['date', 'node_id', 'lv1_in_if_id', 'lv1_eg_if_id', 
-               'hop_latency', 'queue_id', 'queue_occupancy', 
-               'ingress_timestamp','egress_timestamp',
-               'lv2_in_if_id', 'lv2_eg_if_id', 'eg_if_tx_util', 
-               'buffer_id', 'buffer_occupancy', 'l4_port', 'l4_proto']
-    write_headers = 1
-    if os.path.exists(args.o):
-        write_headers = 0
-    with open(args.o, 'a') as file:
-        writer = csv.writer(file)
-        if write_headers:
-            writer.writerow(headers)
-        ifaces = filter(lambda i: 'eth' in i, os.listdir('/sys/class/net/'))
-        iface = ifaces[0]
-        print "sniffing on %s" % iface
-        sys.stdout.flush()
-        sniff(iface = iface,
-            prn = lambda x: handle_pkt(x, writer, args.debug,seq_number))
+    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
+    #SavedID store the last used digest_id from flexible digest
+    #it will be stocked later, in the main loop in currentID to be used here. 
+
+    return SavedID
+
+#return a tab with all the attributes contain in the report by order 
+def BitmapToStringTab(bitmap):
+    tab = []
+    if(bitmap[15] == '1'):
+        tab.append("node_id")
+    if(bitmap[14] == '1'):
+        tab.append("LVL1_IF_ID")
+    if(bitmap[13] == '1'):
+        tab.append("HOP_LATENCY")
+    if(bitmap[12] == '1'):
+        tab.append("QUEUE_ID_OCCUPANCY")
+    if(bitmap[11] == '1'):
+        tab.append("INGRESS_TIMESTAMP")
+    if(bitmap[10] == '1'):
+        tab.append("EGRESS_TIMESTAMP")
+    if(bitmap[9] == '1'):
+        tab.append("LVL2_IF_ID")
+    if(bitmap[8] == '1'):
+        tab.append("EG_IF_TX_UTIL")
+    if(bitmap[7] == '1'):
+        tab.append("BUFFER_ID_OCCUPANCY")
+    return tab
+
+
+# handle all flexible part digests associated with the static part of the report  
+def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID):
+    print(bitmap)
+    print(nbMD)
+    tab = BitmapToStringTab(bitmap)
+
+    nbloop = int(nbMD/MDLenght) #nbloop = number of switch crossed
+    for i in range(nbloop): # for each switch crossed 
+        print("Switch n°"  + str(i))
+        for k in range(MDLenght): #for each metadata collected by switch
+            f = 0 
+            #print("Metadata "+ tab[k-1])
+            for j in bufferSub: # we try to see if the digest with CurrentID is in our bufferSub
+                if (j.list_id == currentID): 
+                    f = 1 # if found , we dont need to listen and skip to the end of the loop 
+                    info = j # the correct digest is stocked 
+                    bufferSub.remove(j) # we remoove it from the buffer
+
+            if (f == 0): #if the currentID digest wasn't in the buffer 
+                q = 0 # exit boolean 
+                while(q == 0):
+                    print("Packet " + str(currentID) + " pas encore reçu, Attente")
+                    stream_msg_resp = sw.StreamMessageIn() #  listen to the sink connection
+                    print("packet reçu")
+                    if stream_msg_resp.WhichOneof('update') == 'digest': # if the message received is a digest 
+                        digest_list = stream_msg_resp.digest
+                        if (digest_list.digest_id == StaticID): #if the digest contain a static part
+                            bufferMain.append(digest_list) # it's stored in the bufferMain
+                        else:
+                            if(digest_list.list_id == currentID): #if the digest is the one with the currendID
+                                info = digest_list # the correct digest is stocked 
+                                q = 1 #we don't have to search for the currentID digest no more 
+                            else:
+                                print('paquet n°'+ str(digest_list.list_id)+ 'recu')
+                                bufferSub.append(digest_list) #otherwise it's stored in bufferSub
+                    
+            
+
+            byteValue = info.data[0].struct.members[0].bitstring #we extract the data from the correct digest
+            print(byteValue.hex()) 
+            with open('./collector/export.csv', 'a', newline='') as csvfile:
+                writer = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([tab[k],byteValue.hex()])
+            currentID = currentID + 1 # increment the currentID
+
+    SavedID = currentID #once all loops end, we send back the last currentID used.
+    return SavedID
+
+    
+
+    
+
+def main():
+    
+    try:
+        # instantiate swicth connection
+        sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
+                name='s3',
+                address='127.0.0.1:50053',
+                device_id=2,
+                proto_dump_file='logs/s3-p4runtime-stream.txt')
+        sw.MasterArbitrationUpdate()
+
+        print("connexion au switch effectué")
+        #instantiate buffer and global indexs
+        bufferSub = [] # buffer which contain static part digests
+        bufferMain = [] # buffer which contain metadata digests 
+        currentID = 1 
+        SavedID = 1
+
+        with open('./collector/export.csv', 'w', newline='') as csvfile:
+            fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+        #main loop 
+        while True:
+            currentID = SavedID # currentID = the last currentID 
+            if(len(bufferMain) == 0): # if bufferMain is empty
+                print("Attente packet")
+                stream_msg_resp = sw.StreamMessageIn() #listen()
+                print("packet reçu")
+                if stream_msg_resp.WhichOneof('update') == 'digest': #if message is a digest
+                    print("Received Digest")
+                    print(stream_msg_resp)
+                    digest_list = stream_msg_resp.digest
+                    if (digest_list.digest_id == StaticID): #if it's a static part digest
+                        SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) # we proceed it
+                    else : 
+                        bufferSub.append(digest_list) #otherwise we stock it in the bufferSub
+            else: #if the bufferMain is not empty
+                digestlist = bufferMain[0] # we pop the first one
+                SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) #and proceed it 
+                bufferMain.remove(0)
+
+
+    
+    except grpc.RpcError as e:
+        printGrpcError(e)
+
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='CSV outputfile')
-    parser.add_argument('--o', help='output CSV file name',
-                        type=str, action="store", required=False,
-                        default=os.devnull)
-    parser.add_argument('--debug', help='--debug y for debug mode',
-                        type=str, action="store", required=False,
-                        default='n')
-    args = parser.parse_args()
-    if args.o != os.devnull:
-        args.o = "../data/%s.csv" % args.o
-    seq_number = -1
-    main(args, seq_number)
+    main()
