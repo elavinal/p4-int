@@ -3,35 +3,19 @@ SRC_DIR = p4
 PCAP_DIR = pcaps
 LOG_DIR = logs
 LOG_LEVEL = trace
-DATA_DIR = data
 
 P4C = p4c-bm2-ss
-
-ifndef CONFIG
-CONFIG = config/config.yaml
-endif
 
 BASIC = $(BUILD_DIR)/basic_switch.json
 SOURCE = $(BUILD_DIR)/source_switch.json
 TRANSIT = $(BUILD_DIR)/transit_switch.json
 SINK = $(BUILD_DIR)/sink_switch.json
 
-# TO REMOVE
-all: run
-
-# TO REMOVE
-run: build
-	sudo -E python3 run_exercise.py -t topo/topology.json -b simple_switch_grpc -L $(LOG_LEVEL)
-#	sudo python controller/network_setup.py
-
 s01-run: build
 	sudo -E python3 run.py -t scenario-01/topology.json -b simple_switch_grpc -L $(LOG_LEVEL)
 
 s01-int:
 	sudo python3 controller/config_int.py --dir scenario-01
-
-stop:
-	sudo mn -c
 
 build: dirs $(BASIC) $(SOURCE) $(TRANSIT) $(SINK)
 
@@ -48,9 +32,8 @@ dirs:
 	@if [ ! -d $(PCAP_DIR) ]; then mkdir -p $(PCAP_DIR); fi
 	@if [ ! -d $(DATA_DIR) ]; then mkdir -p $(DATA_DIR); fi
 
-# TO REMOVE
-int:
-	sudo python3 controller/int_update.py --config $(CONFIG)
+stop:
+	sudo mn -c
 
 clean: stop
 	rm -rf $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR) $(DATA_DIR)
