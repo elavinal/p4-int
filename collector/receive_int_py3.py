@@ -23,7 +23,7 @@ import p4runtime_lib.simple_controller as p4controller
 import yaml
 from p4runtime_lib.convert import decodeNum
 
-
+StaticID = 399285173
 
 def hexToBitMap(Hex): 
     scale = 16 # equals to hexadecimal
@@ -182,10 +182,10 @@ def main():
     try:
         # instantiate swicth connection
         sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
-                name='s4',
-                address='127.0.0.1:50054',
-                device_id=3,
-                proto_dump_file='logs/s4-p4runtime-stream.txt')
+                name='s3',
+                address='127.0.0.1:50053',
+                device_id=2,
+                proto_dump_file='logs/s3-p4runtime-stream.txt')
         sw.MasterArbitrationUpdate()
 
         print("connexion au switch effectué")
@@ -212,12 +212,12 @@ def main():
                     print(stream_msg_resp)
                     digest_list = stream_msg_resp.digest
                     if (digest_list.digest_id == StaticID): #if it's a static part digest
-                        handleStatic(digest_list,sw,bufferSub,bufferMain) # we proceed it
+                        handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) # we proceed it
                     else : 
                         bufferSub.append(digest_list) #otherwise we stock it in the bufferSub
             else: #if the bufferMain is not empty
                 digestlist = bufferMain[0] # we pop the first one
-                SavedID = handleStatic(digest_list,sw,bufferSub,bufferMain,currentID) #and proceed it 
+                SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) #and proceed it 
                 bufferMain.remove(0)
 
 
