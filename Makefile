@@ -30,10 +30,9 @@ dirs:
 	@if [ ! -d $(BUILD_DIR) ]; then mkdir -p $(BUILD_DIR); fi
 	@if [ ! -d $(LOG_DIR) ]; then mkdir -p $(LOG_DIR); fi
 	@if [ ! -d $(PCAP_DIR) ]; then mkdir -p $(PCAP_DIR); fi
-	@if [ ! -d $(DATA_DIR) ]; then mkdir -p $(DATA_DIR); fi
 
 stop:
 	sudo mn -c
 
 clean: stop
-	rm -rf $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR) $(DATA_DIR)
+	rm -rf $(BUILD_DIR) $(PCAP_DIR) $(LOG_DIR)
