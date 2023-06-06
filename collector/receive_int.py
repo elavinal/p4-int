@@ -6,7 +6,7 @@ import os
 import json
 import csv
 import argparse
-
+import time
 
 from datetime import datetime
 import grpc
@@ -32,7 +32,7 @@ def hexToBitMap(Hex):
 
 
 # handle a digest with the static part of the report  
-def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
+def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID,t0):
     index = 0 # will help us naviguate in the data 
     data = digest_list.data[index]
 
@@ -90,12 +90,12 @@ def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID):
 
 
     with open('./collector/export.csv', 'a', newline='') as csvfile:
-        fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+        fieldnames = ['Time','Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writerow({'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'IDEmission': switchEmission.hex(), 'ReportType': IntType.hex(), 'InnerType': InnerType.hex(), 'Report_Lenght': ReportLenght.hex(), 'Meta_Lenght': MDLenght.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(), 'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
+        writer.writerow({'Time': str(time.thread_time_ns()-t0),'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'IDEmission': switchEmission.hex(), 'ReportType': IntType.hex(), 'InnerType': InnerType.hex(), 'Report_Lenght': ReportLenght.hex(), 'Meta_Lenght': MDLenght.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(), 'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
 
 
-    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID)
+    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID,t0)
     #SavedID store the last used digest_id from flexible digest
     #it will be stocked later, in the main loop in currentID to be used here. 
 
@@ -126,7 +126,7 @@ def BitmapToStringTab(bitmap):
 
 
 # handle all flexible part digests associated with the static part of the report  
-def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID):
+def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID,t0):
     print(bitmap)
     print(nbMD)
     tab = BitmapToStringTab(bitmap)
@@ -166,8 +166,8 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
             byteValue = info.data[0].struct.members[0].bitstring #we extract the data from the correct digest
             print(byteValue.hex()) 
             with open('./collector/export.csv', 'a', newline='') as csvfile:
-                writer = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                writer.writerow([tab[k],byteValue.hex()])
+                writer = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                writer.writerow([str(time.thread_time_ns()-t0),tab[k],byteValue.hex()])
             currentID = currentID + 1 # increment the currentID
 
     SavedID = currentID #once all loops end, we send back the last currentID used.
@@ -195,9 +195,10 @@ def main(s):
         bufferMain = [] # buffer which contain metadata digests 
         currentID = 1 
         SavedID = 1
+        t0 = time.thread_time_ns()
 
         with open('./collector/export.csv', 'w', newline='') as csvfile:
-            fieldnames = ['Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+            fieldnames = ['Time','Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
             writer.writeheader()
@@ -213,12 +214,12 @@ def main(s):
                     print(stream_msg_resp)
                     digest_list = stream_msg_resp.digest
                     if (digest_list.digest_id == StaticID): #if it's a static part digest
-                        SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) # we proceed it
+                        SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID,t0) # we proceed it
                     else : 
                         bufferSub.append(digest_list) #otherwise we stock it in the bufferSub
             else: #if the bufferMain is not empty
                 digestlist = bufferMain[0] # we pop the first one
-                SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID) #and proceed it 
+                SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID,t0) # and proceed it 
                 bufferMain.remove(digest_list)
 
 
