@@ -95,7 +95,7 @@ control SwitchEgress(inout headers hdr,
         //NOTE : Using enq_qdepth but also works with deq_qdepth
         hdr.queue_id_occupancy.setValid();
         hdr.queue_id_occupancy.queue_id = 0; //not part of the std meta in v1model
-        hdr.queue_id_occupancy.queue_occupancy = (qdepth_t)standard_metadata.enq_qdepth;
+        hdr.queue_id_occupancy.queue_occupancy = (qdepth_t)standard_metadata.deq_qdepth;
         hdr.int_md_shim.len = hdr.int_md_shim.len + 1;
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
         hdr.int_md_header.hopMetaLength = hdr.int_md_header.hopMetaLength + 1;

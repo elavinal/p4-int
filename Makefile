@@ -17,6 +17,12 @@ s01-run: build
 s01-int:
 	sudo python3 controller/config_int.py --dir scenario-01
 
+s02-run: build
+	sudo -E python3 run.py -t scenario-02/topology.json -b simple_switch_grpc -L $(LOG_LEVEL)
+
+s02-int:
+	sudo python3 controller/config_int.py --dir scenario-02	
+
 build: dirs $(BASIC) $(SOURCE) $(TRANSIT) $(SINK)
 
 # ex: p4c-bm2-ss --p4v 16

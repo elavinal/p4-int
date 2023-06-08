@@ -33,7 +33,7 @@ control SwitchEgress(inout headers hdr,
     action add_queue_id_occupancy() {
         hdr.queue_id_occupancy.setValid();
         hdr.queue_id_occupancy.queue_id = 0;//not in v1model std meta
-        hdr.queue_id_occupancy.queue_occupancy = (qdepth_t)standard_metadata.enq_qdepth;
+        hdr.queue_id_occupancy.queue_occupancy = (qdepth_t)standard_metadata.deq_qdepth;
     }
 
     //Creates ingress_timestamp header

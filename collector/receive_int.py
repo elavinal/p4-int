@@ -162,8 +162,8 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
                                 bufferSub.append(digest_list) #otherwise it's stored in bufferSub
                     
             
-
             byteValue = info.data[0].struct.members[0].bitstring #we extract the data from the correct digest
+            print(byteValue)
             print(byteValue.hex()) 
             with open('./collector/export.csv', 'a', newline='') as csvfile:
                 writer = csv.writer(csvfile, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
