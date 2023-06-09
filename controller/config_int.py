@@ -33,7 +33,7 @@ def write_int_rules(table_name, action_name, p4info_helper, addr, switch):
     table_entry = p4info_helper.buildTableEntry(
         table_name=table_name,
         match_fields={
-            "hdr.ipv4.dstAddr": (addr, 32)
+
         },
         action_name=action_name)
     switch.WriteTableEntry(table_entry)
@@ -165,7 +165,7 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         table_entry = p4info_helper.buildTableEntry(
             table_name="SwitchEgress.add_node_id_hdr",
             match_fields={
-                "hdr.ipv4.dstAddr": (addr, 32)
+
             },
             action_name="SwitchEgress.add_node_id",
             action_params={
@@ -175,52 +175,52 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         switch.WriteTableEntry(table_entry)
  
         write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
-                        "SwitchEgress.add_lv1_if_id", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_lv1_if_id", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_hop_latency_hdr",
-                        "SwitchEgress.add_hop_latency", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_hop_latency", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_queue_id_occupancy_hdr",
-                        "SwitchEgress.add_queue_id_occupancy", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_queue_id_occupancy", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_ingress_timestamp_hdr",
-                        "SwitchEgress.add_ingress_timestamp", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_ingress_timestamp", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_egress_timestamp_hdr",
-                        "SwitchEgress.add_egress_timestamp", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_egress_timestamp", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_lv2_if_id_hdr",
-                        "SwitchEgress.add_lv2_if_id", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_lv2_if_id", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_eg_if_tx_util_hdr",
-                        "SwitchEgress.add_eg_if_tx_util", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_eg_if_tx_util", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
         write_int_rules("SwitchEgress.add_buffer_id_occupancy_hdr",
-                        "SwitchEgress.add_buffer_id_occupancy", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
+                    "SwitchEgress.add_buffer_id_occupancy", 
+                    p4info_helper, 
+                    addr, 
+                    switch)
 
         if switch_role != SOURCE:
             write_int_rules("SwitchEgress.update_int_hdrs",
-                            "SwitchEgress.update_int_headers", 
-                            p4info_helper, 
-                            addr, 
-                            switch)
+                        "SwitchEgress.update_int_headers", 
+                        p4info_helper, 
+                        addr, 
+                        switch)
 
         if switch_role == SOURCE: 
             #Source rules

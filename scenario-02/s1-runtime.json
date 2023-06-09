@@ -34,7 +34,7 @@
         {
             "table": "SwitchIngress.ipv4_lpm",
             "match": {
-                "hdr.ipv4.dstAddr": ["10.0.5.0", 24]
+                "hdr.ipv4.dstAddr": ["10.0.3.0", 24]
             },
             "action_name": "SwitchIngress.ipv4_forward",
             "action_params": {

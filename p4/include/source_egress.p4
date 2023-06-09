@@ -154,7 +154,7 @@ control SwitchEgress(inout headers hdr,
 
     /******************* T A B L E S ************************/
 
-    table add_int_hdr_udp {
+table add_int_hdr_udp {
         key = {
             hdr.ipv4.dstAddr : lpm;
             hdr.ipv4.srcAddr : exact;
@@ -167,7 +167,7 @@ control SwitchEgress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table add_int_hdr_tcp {
+table add_int_hdr_tcp {
         key = {
             hdr.ipv4.dstAddr : lpm;
             hdr.ipv4.srcAddr : exact;
@@ -180,103 +180,69 @@ control SwitchEgress(inout headers hdr,
         default_action = NoAction();
     }
 
+
     table add_node_id_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_node_id;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_lv1_if_id_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_lv1_if_id;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_hop_latency_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_hop_latency;
-            NoAction;
+            
         }
-        default_action = NoAction();
     }
 
     table add_queue_id_occupancy_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_queue_id_occupancy;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_ingress_timestamp_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+       
         actions = {
             add_ingress_timestamp;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_egress_timestamp_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_egress_timestamp;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_lv2_if_id_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+       
         actions = {
             add_lv2_if_id;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_eg_if_tx_util_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_eg_if_tx_util;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
     table add_buffer_id_occupancy_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        
         actions = {
             add_buffer_id_occupancy;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
 table sampleUDP {
