@@ -18,6 +18,7 @@ flows:
     frequency : 2 #1 of every 2 paquets 
     instructions:
       - node_id
+
   - id: 2
     ipv4_dest: 10.0.2.2
     ipv4_src: 10.0.1.1
@@ -27,13 +28,14 @@ flows:
     instructions:
       - node_id
       - hop_latency
+      - queue_id_occupancy
 
   - id: 3
     ipv4_dest: 10.0.3.3
     ipv4_src: 10.0.1.1
-    l4_proto: tcp
+    l4_proto: udp
     port_dest: 55556
-    frequency : 2  #1 of every 2 paquets
+    frequency : 100  #1 of every 2 paquets
     instructions:
       - node_id
       - hop_latency

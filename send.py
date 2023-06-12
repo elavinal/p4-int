@@ -41,7 +41,7 @@ def main(args):
     pkt.show2()
     for i in range(args.c):
         sendp(pkt, iface=iface, verbose=False)
-        sleep(1)
+        sleep(0.1)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='receiver parser')
