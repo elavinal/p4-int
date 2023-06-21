@@ -100,7 +100,7 @@ def handleStatic(digest_list, sw, bufferSub, bufferMain, currentID, t0):
     print("Reserved: " + RSV.hex() + " // must be 0")
     index += 1
 
-    # Individual Report Header (Ver 2.0)
+    # Individual Report Main Contents for RepType 1 (INT)
     # 0                                                               31
     # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
     # |            RepMdBits          |      Domain Specific ID       |
