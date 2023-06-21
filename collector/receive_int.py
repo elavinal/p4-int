@@ -27,81 +27,125 @@ StaticID = 399285173
 
 def hexToBitMap(Hex): 
     scale = 16 # equals to hexadecimal
-    num_of_bits = 16 #llenght of the desired bitmap output
+    num_of_bits = 16 #lLength of the desired bitmap output
     return bin(int(Hex, scale))[2:].zfill(num_of_bits)
 
 
+# https://p4.org/p4-spec/docs/telemetry_report_v2_0.pdf
+#
+
 # handle a digest with the static part of the report  
-def handleStatic(digest_list,sw,bufferSub,bufferMain,currentID,t0):
+def handleStatic(digest_list, sw, bufferSub, bufferMain, currentID, t0):
+
     index = 0 # will help us naviguate in the data 
     data = digest_list.data[index]
 
-    print("\n *** Parsing Telemetry report Group ***")
+    # Telemetry Report Group Header (Ver 2.0)
+    # 0                                                               31
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    # |  Ver  |   hw_id   |           Sequence Number                 |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    # |                            Node ID                            |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    print("\n *** Parsing Telemetry Report Group Header ***")
     version = data.struct.members[index].bitstring
-    print("Version :" + version.hex())
-    index+=1 
+    print("Version: " + version.hex())
+    index += 1
     hw_id = data.struct.members[index].bitstring
-    print("hw_id :" + hw_id.hex()) 
-    index+=1 
+    print("hw_id: " + hw_id.hex())
+    index += 1
     Sequence_number = data.struct.members[index].bitstring
-    print("Sequence number :" + Sequence_number.hex())
-    index+=1  
+    print("Sequence number: " + Sequence_number.hex())
+    index += 1
     switchEmission = data.struct.members[index].bitstring
-    print("IDSwitchEmission :" + switchEmission.hex()) 
-    index+=1 
-
+    print("Node ID: " + switchEmission.hex())
+    index += 1
+    
+    # Individual Report Header (Ver 2.0)
+    # 0                                                               31
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    # |RepType| InType| Report Length |   MD Length   |D|Q|F|I|  Rsvd |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--+
+    # |                                                               |   |
+    # |                 Individual Report Main Contents               |   |
+    # |                  (varies depending on RepType)                |   |
+    # |                                                               |   |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ Report
+    # |                                                               | Length
+    # |                 Individual Report Inner Contents              |   |
+    # |         (Truncated Packet or Additional DS Extension Data     |   |
+    # |              or TLV depending on InType)                      |   |
+    # |                                                               |   |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--+
     print("\n *** Parsing Individual Report Header ***")
-    IntType = data.struct.members[index].bitstring
-    print("ReportType :" + IntType.hex() + " // 01 = INT")
-    index+=1 
-    InnerType = data.struct.members[index].bitstring
-    print("InnerType :" + InnerType.hex() + " // 00 = No tunned Report")
-    index+=1 
-    ReportLenght = data.struct.members[index].bitstring
-    print("Report Lenght :" + ReportLenght.hex())
-    nbMD = int(ReportLenght.hex(),16)
-    nbMD = nbMD -3 #minus the lenght of int shim + int header
-    index+=1 
-    MDLenght = data.struct.members[index].bitstring
-    print("Metadata Lenght :" + MDLenght.hex())
-    lenghtMD = int(MDLenght.hex(),16)
-    index+=1 
+    RepType = data.struct.members[index].bitstring
+    print("Report Type: " + RepType.hex() + " // 01 = INT")
+    index += 1
+    InType = data.struct.members[index].bitstring
+    print("Inner Type: " + InType.hex() + " // 00 = None")
+    index += 1
+    ReportLength = data.struct.members[index].bitstring
+    print("Report Length: " + ReportLength.hex())
+    nbMD = int(ReportLength.hex(), 16)
+    nbMD = nbMD - 3 # minus the length of int shim + int header
+    index += 1
+    MDLength = data.struct.members[index].bitstring
+    print("Metadata Length: " + MDLength.hex())
+    LengthMD = int(MDLength.hex(),16)
+    index += 1
     Flags = data.struct.members[index].bitstring
-    print("Flags :" + Flags.hex() + " // (D)Dropped , (Q)Congested, (F)Tracked, (I) Intermediate")
-    index+=1 
+    print("Flags: " + Flags.hex() + " // (D)Dropped , (Q)Congested, (F)Tracked, (I)Intermediate")
+    index += 1
     RSV = data.struct.members[index].bitstring
-    print("reserved :" + RSV.hex() + " // must be 0")
-    index+=1 
+    print("Reserved: " + RSV.hex() + " // must be 0")
+    index += 1
 
-    print("\n *** Individual Report Main Content ***")
+    # Individual Report Header (Ver 2.0)
+    # 0                                                               31
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    # |            RepMdBits          |      Domain Specific ID       |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+    # |            DSMdBits           |          DSMdstatus           |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--+
+    # |              Variable Optional Baseline Metadata              |   |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ MD Length
+    # |           Variable Optional Domain Specific Metadata          |   |
+    # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+<--+
+    print("\n *** Individual Report Main Contents ***")
     RepMDBits = data.struct.members[index].bitstring
     bitmap = hexToBitMap(RepMDBits.hex())
-    print("BITMAP :" + bitmap)
-    index+=1 
+    print("BITMAP: " + bitmap)
+    index += 1
     DomainSpecID = data.struct.members[index].bitstring
-    print("DomainSpecID :" + DomainSpecID.hex())
-    index+=1 
+    print("DomainSpecID: " + DomainSpecID.hex())
+    index += 1
     DSMdBits = data.struct.members[index].bitstring
-    print("DomainSpec BITMAP :" + DSMdBits.hex())
-    index+=1 
+    print("DomainSpec BITMAP: " + DSMdBits.hex())
+    index += 1
     DSMdStatus = data.struct.members[index].bitstring
-    print("DomainSpecMD status  :" + DSMdStatus.hex())
-    index+=1 
+    print("DomainSpec MD status: " + DSMdStatus.hex())
+    index += 1
 
 
     with open('./collector/export.csv', 'a', newline='') as csvfile:
-        fieldnames = ['Time','Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+        fieldnames = ['Time', 'Version', 'hw_id', 'Sequence_Number', 'NodeID', # Telemetry Report Group Header
+                      'RepType', 'InType', 'RepLength', 'MDLength', 'Flags', 'Reserved', # Individual Report Header
+                      'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus'] # Individual Report Main Contents
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writerow({'Time': str(time.thread_time_ns()-t0),'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'IDEmission': switchEmission.hex(), 'ReportType': IntType.hex(), 'InnerType': InnerType.hex(), 'Report_Lenght': ReportLenght.hex(), 'Meta_Lenght': MDLenght.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(), 'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
+        writer.writerow(
+            {'Time': str(time.thread_time_ns()-t0),
+             'Version': version.hex(), 'hw_id': hw_id.hex(), 'Sequence_Number': Sequence_number.hex(), 'NodeID': switchEmission.hex(),
+             'RepType': RepType.hex(), 'InType': InType.hex(), 'RepLength': ReportLength.hex(), 'MDLength': MDLength.hex(), 'Flags': Flags.hex() , 'Reserved': RSV.hex(),
+             'Bitmap': str(bitmap), 'DomainSpecID': DomainSpecID.hex(), 'DomainSpecBitmap': DSMdBits.hex(), 'DomainSpecStatus': DSMdStatus.hex()})
 
 
-    SavedID = handleDynamic(bitmap,nbMD,lenghtMD,digest_list.list_id,sw,bufferSub,bufferMain,currentID,t0)
-    #SavedID store the last used digest_id from flexible digest
-    #it will be stocked later, in the main loop in currentID to be used here. 
+    SavedID = handleDynamic(bitmap, nbMD, LengthMD, digest_list.list_id, sw, bufferSub, bufferMain, currentID, t0)
+    # SavedID stores the last used digest_id from flexible digest
+    # it will be ocked later, in the main loop in currentID to be used here. 
 
     return SavedID
 
-#return a tab with all the attributes contain in the report by order 
+# return a tab with all the attributes contained in the report by order 
 def BitmapToStringTab(bitmap):
     tab = []
     if(bitmap[15] == '1'):
@@ -126,15 +170,15 @@ def BitmapToStringTab(bitmap):
 
 
 # handle all flexible part digests associated with the static part of the report  
-def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,currentID,t0):
+def handleDynamic(bitmap,nbMD,MDLength,digest_id,sw,bufferSub,bufferMain,currentID,t0):
     print(bitmap)
     print(nbMD)
     tab = BitmapToStringTab(bitmap)
 
-    nbloop = int(nbMD/MDLenght) #nbloop = number of switch crossed
+    nbloop = int(nbMD/MDLength) #nbloop = number of switch crossed
     for i in range(nbloop): # for each switch crossed 
         print("Switch n°"  + str(i))
-        for k in range(MDLenght): #for each metadata collected by switch
+        for k in range(MDLength): #for each metadata collected by switch
             f = 0 
             #print("Metadata "+ tab[k-1])
             for j in bufferSub: # we try to see if the digest with CurrentID is in our bufferSub
@@ -176,15 +220,12 @@ def handleDynamic(bitmap,nbMD,MDLenght,digest_id,sw,bufferSub,bufferMain,current
     SavedID = currentID #once all loops end, we send back the last currentID used.
     return SavedID
 
-    
-
-    
 
 def main(s):
     
     try:
         idSwitch = int(s)-1 
-        # instantiate swicth connection
+        # instantiate switch connection
         sw = p4runtime_lib.bmv2.Bmv2SwitchConnection(
                 name='s%s' % s,
                 address='127.0.0.1:5005%s' % s,
@@ -192,20 +233,21 @@ def main(s):
                 proto_dump_file='logs/s%s-p4runtime-stream.txt' % s) 
         sw.MasterArbitrationUpdate()
 
-        print("connexion au switch effectué")
-        #instantiate buffer and global indexs
-        bufferSub = [] # buffer which contain static part digests
-        bufferMain = [] # buffer which contain metadata digests 
+        print("Connected to switch %s" % s)
+        # instantiate buffer and global indexes
+        bufferSub = [] # buffer which contains static part digests
+        bufferMain = [] # buffer which contains metadata digests 
         currentID = 1 
         SavedID = 1
         t0 = time.thread_time_ns()
 
         with open('./collector/export.csv', 'w', newline='') as csvfile:
-            fieldnames = ['Time','Version', 'hw_id', 'Sequence_Number', 'IDEmission', 'ReportType', 'InnerType', 'Report_Lenght', 'Meta_Lenght', 'Flags', 'Reserved', 'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus']
+            fieldnames = ['Time', 'Version', 'hw_id', 'Sequence_Number', 'NodeID', # Telemetry Report Group Header
+                          'RepType', 'InType', 'RepLength', 'MDLength', 'Flags', 'Reserved', # Individual Report Header
+                          'Bitmap', 'DomainSpecID', 'DomainSpecBitmap', 'DomainSpecStatus'] # Individual Report Main Contents
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-
             writer.writeheader()
-        #main loop 
+        # main loop 
         while True:
             currentID = SavedID # currentID = the last currentID 
             if(len(bufferMain) == 0): # if bufferMain is empty
@@ -216,24 +258,22 @@ def main(s):
                     print("Received Digest")
                     print(stream_msg_resp)
                     digest_list = stream_msg_resp.digest
-                    if (digest_list.digest_id == StaticID): #if it's a static part digest
-                        SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID,t0) # we proceed it
-                    else : 
+                    if (digest_list.digest_id == StaticID): # if it's a static part digest
+                        SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID, t0) # we proceed it
+                    else: 
                         bufferSub.append(digest_list) #otherwise we stock it in the bufferSub
             else: #if the bufferMain is not empty
                 digestlist = bufferMain[0] # we pop the first one
-                SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID,t0) # and proceed it 
+                SavedID = handleStatic(digest_list, sw, bufferSub, bufferMain, currentID, t0) # and proceed it 
                 bufferMain.remove(digest_list)
 
-
-    
     except grpc.RpcError as e:
         printGrpcError(e)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='id of the sink switch to connect to, exemple: --s 3 to connect to s3')
-    parser.add_argument('--s', help='number of the sink swicth to connect to, exemple: --s 3 to connect to s3',
+    parser.add_argument('--s', help='number of the sink switch to connect to, exemple: --s 3 to connect to s3',
                         type=str, action="store", required=True)
     args = parser.parse_args()
     main(args.s)
