@@ -87,11 +87,13 @@ struct int_metadata_t {
 struct int_headers_t {
     // tel_rep_group_header_ta tel_rep_group_header;
 
+    // Report Group Header
     bit<4>  version; // This spec defines 2
     bit<6>  hw_id; // to identify NIC
     bit<22> seq_number; // to be stored in a register and incremented 
     switchID_t node_idE;
 
+    // Individual Report Header
     bit<4>  RepType;
     bit<4>  InType;
     bit<8>  ReportLenght;
@@ -99,6 +101,7 @@ struct int_headers_t {
     bit<4>  flags;
     bit<4>  RSV;
 
+    // Individual Report Main Contents
     bit<16> RepMDBits;
     bit<16> DomainSpecificId;
     bit<16> DSMdBits;
