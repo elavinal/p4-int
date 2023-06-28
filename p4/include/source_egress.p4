@@ -287,7 +287,7 @@ table sampleTCP {
         tmpFrequency.read(b,0); // same for b 
         sampling.read(c,a); // we check the counter with tmpID 
         
-        if(b == c){ //if the max frequency fixed is equal to the counter
+        if(1 == c){ //if the max frequency fixed is equal to the counter
             //we add int headers to the paquet
             if(hdr.tcp.isValid()) {
                 add_int_hdr_tcp.apply();
@@ -295,8 +295,10 @@ table sampleTCP {
             if(hdr.udp.isValid()) {
                 add_int_hdr_udp.apply();
             }
+            
+        }
+        if(b == c){
             sampling.write(a,0); //reset the counter
-
         }
         //Adding all the required headers according to instruction bitmap
         if(hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {
