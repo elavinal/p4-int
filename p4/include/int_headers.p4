@@ -84,7 +84,9 @@ header metadata_extractor_t {
 struct int_metadata_t {
     md_word_t int_metadata;
 }
-struct int_headers_t {
+
+// TODO rename int_report_t
+struct int_headers_t { 
     // tel_rep_group_header_ta tel_rep_group_header;
 
     // Report Group Header
@@ -110,7 +112,7 @@ struct int_headers_t {
 
 struct metadata {
     parser_metadata_t parser_metadata;
-    int_headers_t int_headers;
+    int_headers_t int_headers;  // TODO rename int_headers --> int_report 
     int_metadata_t int_metadata;
     resubmit_meta_t resubmit_meta;
 }

@@ -5,6 +5,7 @@ control SwitchIngress(inout headers hdr,
     
                        inout standard_metadata_t standard_metadata) {
 
+    // TODO array of registers? according to flow_id?
     register<bit<22>>(1) seq_number;
     register<bit<8>>(1) clone_number;
 
@@ -97,34 +98,34 @@ control SwitchIngress(inout headers hdr,
                 init = 0;
                 clone_number.write(0,init);  
 
-                //clone the paquet to Ingress
+                // resubmit the paquet to Ingress
                 resubmit_preserving_field_list((bit<8>)1);
             }
             else {
-                //if the paquet is a clone 
+                // if the paquet is a clone 
                 bit<8> nbcl;
                 clone_number.read(nbcl,0);
-                //we read the number of clone made so far 
+                // we read the number of clone made so far 
                 if (nbcl == hdr.int_md_shim.len - 3) {
-                    //if all clone needed were made , we drop the paquet and no more clone will be created
+                    // if all clone needed were made, we drop the paquet and no more clone will be created
                     drop();
                 }
                 else {
-                    //otherwise we read the metadata at the clone Index
+                    // otherwise we read the metadata at the clone Index
                     meta.int_metadata.int_metadata = hdr.metadata_extractor[nbcl].md_word;
-                    //and send it to the collector
+                    // and send it to the collector
                     digest<int_metadata_t>(1, meta.int_metadata);
 
-                    //increase the clone counter
+                    // increase the clone counter
                     bit<8> tempor;
                     clone_number.read(tempor,0);
                     tempor = tempor + 1;
                     clone_number.write(0,tempor);
 
-                    //clone the paquet again in Ingress
+                    // resubmit the paquet again in Ingress
                     resubmit_preserving_field_list((bit<8>)1);
                 }
-                //drop any clone 
+                // drop any clone 
                 drop();  
             }
         }
