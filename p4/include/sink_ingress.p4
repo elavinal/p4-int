@@ -19,16 +19,16 @@ control SwitchIngress(inout headers hdr,
         hdr.ethernet.dstAddr = dstAddr;
     }
     action trgh_digest(switchID_t switch_id){
-            meta.int_headers.version = 0b0010;
-            meta.int_headers.hw_id = 0;
+            meta.int_report.version = 0b0010;
+            meta.int_report.hw_id = 0;
 
             bit<22> tmp;
             seq_number.read(tmp,0);
-            meta.int_headers.seq_number = tmp;
+            meta.int_report.seq_number = tmp;
             tmp = tmp + 1;
             seq_number.write(0,tmp);
 
-            meta.int_headers.node_idE = switch_id;
+            meta.int_report.node_idE = switch_id;
 
     }
 
@@ -78,20 +78,20 @@ control SwitchIngress(inout headers hdr,
                 trgh.apply();
 
                 // fill int header with paquet information, the report format is similar to what we had to the paquet 
-                meta.int_headers.RepType = hdr.int_md_shim.type;
-                meta.int_headers.InType = 0b0000;
-                meta.int_headers.ReportLenght = hdr.int_md_shim.len;
-                meta.int_headers.MDlength = (bit<8>)hdr.int_md_header.hopMetaLength;
-                meta.int_headers.flags = 0b0000;
-                meta.int_headers.RSV = 0b0000;
+                meta.int_report.RepType = hdr.int_md_shim.type;
+                meta.int_report.InType = 0b0000;
+                meta.int_report.ReportLenght = hdr.int_md_shim.len;
+                meta.int_report.MDlength = (bit<8>)hdr.int_md_header.hopMetaLength;
+                meta.int_report.flags = 0b0000;
+                meta.int_report.RSV = 0b0000;
 
-                meta.int_headers.RepMDBits = (bit<16>)hdr.int_md_header.instructionBitmap;
-                meta.int_headers.DomainSpecificId = hdr.int_md_header.domainSpecificId;
-                meta.int_headers.DSMdBits = 0;
-                meta.int_headers.DSMdStatus = 0;
+                meta.int_report.RepMDBits = (bit<16>)hdr.int_md_header.instructionBitmap;
+                meta.int_report.DomainSpecificId = hdr.int_md_header.domainSpecificId;
+                meta.int_report.DSMdBits = 0;
+                meta.int_report.DSMdStatus = 0;
 
                 // send to the collector the static/main part of the report
-                digest<int_headers_t>(1, meta.int_headers);
+                digest<int_report_t>(1, meta.int_report);
 
                 // initiate the counter of clone made at 0 
                 bit<8> init;

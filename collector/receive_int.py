@@ -23,7 +23,7 @@ import p4runtime_lib.simple_controller as p4controller
 import yaml
 from p4runtime_lib.convert import decodeNum
 
-StaticID = 399285173
+StaticID = 392481334
 
 def hexToBitMap(Hex): 
     scale = 16 # equals to hexadecimal
