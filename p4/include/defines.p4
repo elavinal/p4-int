@@ -11,8 +11,8 @@
 #define PKT_INSTANCE_TYPE_REPLICATION 5
 #define PKT_INSTANCE_TYPE_RESUBMIT 6
 
-#define MAX_MD_WORDS 99
-#define MAX_MD 20
+#define MAX_MD_WORDS 32
+#define MAX_MD 10
 
 const bit<16> TYPE_IPV4      = 0x800;
 const bit<8>  TYPE_TCP       = 0x06;

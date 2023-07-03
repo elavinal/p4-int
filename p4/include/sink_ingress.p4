@@ -7,7 +7,6 @@ control SwitchIngress(inout headers hdr,
 
     // TODO array of registers? according to flow_id?
     register<bit<22>>(1) seq_number;
-    register<bit<8>>(1) clone_number;
 
     action drop(){
         mark_to_drop(standard_metadata);
@@ -90,43 +89,27 @@ control SwitchIngress(inout headers hdr,
                 meta.int_report.DSMdBits = 0;
                 meta.int_report.DSMdStatus = 0;
 
-                // send to the collector the static/main part of the report
+
+                meta.int_report.metadata0 = hdr.metadata_extractor[0].md_word;
+                meta.int_report.metadata1 = hdr.metadata_extractor[1].md_word;
+                meta.int_report.metadata2 = hdr.metadata_extractor[2].md_word;
+                meta.int_report.metadata3 = hdr.metadata_extractor[3].md_word;
+                meta.int_report.metadata4 = hdr.metadata_extractor[4].md_word;
+                meta.int_report.metadata5 = hdr.metadata_extractor[5].md_word;
+                meta.int_report.metadata6 = hdr.metadata_extractor[6].md_word;
+                meta.int_report.metadata7 = hdr.metadata_extractor[7].md_word;
+                meta.int_report.metadata8 = hdr.metadata_extractor[8].md_word;
+                meta.int_report.metadata9 = hdr.metadata_extractor[9].md_word;
+                meta.int_report.metadata10 = hdr.metadata_extractor[10].md_word;
+                meta.int_report.metadata11 = hdr.metadata_extractor[11].md_word;
+                meta.int_report.metadata12 = hdr.metadata_extractor[12].md_word;
+                meta.int_report.metadata13 = hdr.metadata_extractor[13].md_word;
+                meta.int_report.metadata14 = hdr.metadata_extractor[14].md_word;
+                meta.int_report.metadata15 = hdr.metadata_extractor[15].md_word;
+                // send to the collector the report
                 digest<int_report_t>(1, meta.int_report);
 
-                // initiate the counter of clone made at 0 
-                bit<8> init;
-                init = 0;
-                clone_number.write(0,init);  
-
-                // resubmit the paquet to Ingress
-                resubmit_preserving_field_list((bit<8>)1);
-            }
-            else {
-                // if the paquet is a clone 
-                bit<8> nbcl;
-                clone_number.read(nbcl,0);
-                // we read the number of clone made so far 
-                if (nbcl == hdr.int_md_shim.len - 3) {
-                    // if all clone needed were made, we drop the paquet and no more clone will be created
-                    drop();
-                }
-                else {
-                    // otherwise we read the metadata at the clone Index
-                    meta.int_metadata.int_metadata = hdr.metadata_extractor[nbcl].md_word;
-                    // and send it to the collector
-                    digest<int_metadata_t>(1, meta.int_metadata);
-
-                    // increase the clone counter
-                    bit<8> tempor;
-                    clone_number.read(tempor,0);
-                    tempor = tempor + 1;
-                    clone_number.write(0,tempor);
-
-                    // resubmit the paquet again in Ingress
-                    resubmit_preserving_field_list((bit<8>)1);
-                }
-                // drop any clone 
-                drop();  
+            
             }
         }
         if (hdr.ipv4.isValid())

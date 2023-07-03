@@ -108,6 +108,25 @@ struct int_report_t {
     bit<16> DomainSpecificId;
     bit<16> DSMdBits;
     bit<16> DSMdStatus;
+
+    // Metadata stack
+    md_word_t metadata0;
+    md_word_t metadata1;
+    md_word_t metadata2;
+    md_word_t metadata3;
+    md_word_t metadata4;
+    md_word_t metadata5;
+    md_word_t metadata6;
+    md_word_t metadata7;
+    md_word_t metadata8;
+    md_word_t metadata9;
+    md_word_t metadata10;
+    md_word_t metadata11;
+    md_word_t metadata12;
+    md_word_t metadata13;
+    md_word_t metadata14;
+    md_word_t metadata15;
+
 }
 
 struct metadata {
