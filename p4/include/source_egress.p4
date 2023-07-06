@@ -155,29 +155,16 @@ control SwitchEgress(inout headers hdr,
     /******************* T A B L E S ************************/
 
 table add_int_hdr_udp {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-            hdr.ipv4.srcAddr : exact;
-            hdr.udp.dstPort  : exact;
-        }
         actions = {
             setup_int;
-            NoAction;
         }
-        default_action = NoAction();
     }
 
 table add_int_hdr_tcp {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-            hdr.ipv4.srcAddr : exact;
-            hdr.tcp.dstPort  : exact;
-        }
         actions = {
             setup_int;
-            NoAction;
+           
         }
-        default_action = NoAction();
     }
 
 
@@ -249,7 +236,7 @@ table sampleUDP {
         key = {
             hdr.ipv4.dstAddr : lpm;
             hdr.ipv4.srcAddr : exact;
-            hdr.udp.dstPort  : exact;
+            hdr.udp.dstPort : ternary; 
         }
         actions = {
             increment;
@@ -261,7 +248,7 @@ table sampleTCP {
         key = {
             hdr.ipv4.dstAddr : lpm;
             hdr.ipv4.srcAddr : exact;
-            hdr.tcp.dstPort  : exact;
+            hdr.tcp.dstPort  : ternary;
         }
         actions = {
             increment;
