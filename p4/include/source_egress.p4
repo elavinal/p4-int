@@ -234,7 +234,7 @@ table add_int_hdr_tcp {
 
 table sampleUDP {
         key = {
-            hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.dstAddr : exact;
             hdr.ipv4.srcAddr : exact;
             hdr.udp.dstPort : ternary; 
         }
@@ -246,7 +246,7 @@ table sampleUDP {
     }
 table sampleTCP {
         key = {
-            hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.dstAddr : exact;
             hdr.ipv4.srcAddr : exact;
             hdr.tcp.dstPort  : ternary;
         }

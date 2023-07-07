@@ -75,17 +75,15 @@ def setup_source_instructions(switch, config, p4info_helper):
                 action_params={
                     "instructionBitmap" : instruction
                 }
-                
             )
             switch.WriteTableEntry(table_entry)
-            if(dstPort == "wildcard"):
-    
+            if(dstPort == 'wildcard'):
+                print("TCP wildcard")
                 table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.sampleTCP",
                 match_fields={
-                "hdr.ipv4.dstAddr": (dstAddr, 32),
-                "hdr.ipv4.srcAddr": (srcAddr),
-                "hdr.tcp.dstPort" : (1,1)
+                "hdr.ipv4.dstAddr": (dstAddr),
+                "hdr.ipv4.srcAddr": (srcAddr)
                 },
                 action_name="SwitchEgress.increment",
                 action_params={
@@ -94,15 +92,13 @@ def setup_source_instructions(switch, config, p4info_helper):
                 },
                 priority = 80
                 )
-                switch.WriteTableEntry(table_entry)
-                print("TCP wildcard")
             else:
                 table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.sampleTCP",
                 match_fields={
-                "hdr.ipv4.dstAddr": (dstAddr, 32),
+                "hdr.ipv4.dstAddr": (dstAddr),
                 "hdr.ipv4.srcAddr": (srcAddr),
-                "hdr.tcp.dstPort" : (dstPort, dstPort)
+                "hdr.tcp.dstPort" : (dstPort, 0xFFFF)
                 },
                 action_name="SwitchEgress.increment",
                 action_params={
@@ -112,7 +108,6 @@ def setup_source_instructions(switch, config, p4info_helper):
                 priority = 100
                 )
                 print("TCP normal")
-                switch.WriteTableEntry(table_entry)
 
         elif dest['l4_proto'] == 'udp':
             table_entry = p4info_helper.buildTableEntry(
@@ -126,14 +121,12 @@ def setup_source_instructions(switch, config, p4info_helper):
                 }
             )
             switch.WriteTableEntry(table_entry)
-            if(dstPort == "wildcard"):
-    
+            if(dstPort == 'wildcard'):
                 table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.sampleUDP",
                 match_fields={
-                "hdr.ipv4.dstAddr": (dstAddr, 32),
-                "hdr.ipv4.srcAddr": (srcAddr),
-                "hdr.udp.dstPort" : (1,1)
+                "hdr.ipv4.dstAddr": (dstAddr),
+                "hdr.ipv4.srcAddr": (srcAddr)
                 },
                 action_name="SwitchEgress.increment",
                 action_params={
@@ -142,15 +135,14 @@ def setup_source_instructions(switch, config, p4info_helper):
                 },
                 priority = 80
                 )
-                switch.WriteTableEntry(table_entry)
                 print("Udp wildcard")
-            else:
+            else :
                 table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.sampleUDP",
                 match_fields={
-                "hdr.ipv4.dstAddr": (dstAddr, 32),
+                "hdr.ipv4.dstAddr": (dstAddr),
                 "hdr.ipv4.srcAddr": (srcAddr),
-                "hdr.udp.dstPort" : (dstPort, dstPort)
+                "hdr.udp.dstPort" : (dstPort, 0xFFFF)
                 },
                 action_name="SwitchEgress.increment",
                 action_params={
@@ -160,7 +152,7 @@ def setup_source_instructions(switch, config, p4info_helper):
                 priority = 100
                 )
                 print("Udp normal")
-                switch.WriteTableEntry(table_entry)
+        switch.WriteTableEntry(table_entry)
         
 
 # INT roles : 0 source, 1 transit, 2 sink

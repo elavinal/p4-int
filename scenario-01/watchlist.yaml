@@ -8,34 +8,36 @@ sink:
   - s3
 # Watchlist
 flows:
+
   - id: 1
-    ipv4_dest: 10.0.2.2
+    ipv4_dest: 10.0.3.3
     ipv4_src: 10.0.1.1
     l4_proto: tcp
     port_dest: 55555
     frequency : 2 #1 of every 2 paquets 
     instructions:
       - node_id
-  - id: 2
-    ipv4_dest: 10.0.2.2
-    ipv4_src: 10.0.1.1
-    l4_proto: udp
-    port_dest: 55555
-    frequency : 2  #1 of every 2 paquets
-    instructions:
-      - node_id
-      - hop_latency
-      - queue_id_occupancy
-
   - id: 3
     ipv4_dest: 10.0.2.2
     ipv4_src: 10.0.1.1
-    port_dest: wildcard 
+    port_dest: wildcard
     l4_proto: tcp
     frequency : 3  #1 of every 2 paquets
     instructions:
       - node_id
       - hop_latency
+  # - id: 2
+  #   ipv4_dest: 10.0.2.2
+  #   ipv4_src: 10.0.1.1
+  #   l4_proto: udp
+  #   port_dest: 55555
+  #   frequency : 2  #1 of every 2 paquets
+  #   instructions:
+  #     - node_id
+  #     - hop_latency
+  #     - queue_id_occupancy
+
+
 
 # Possible metadata instructions:
 # - node_id
