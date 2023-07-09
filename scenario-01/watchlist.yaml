@@ -7,38 +7,37 @@ transit:
 sink:
   - s3
 # Watchlist
+#   ipv4_dst and l4_proto mandatory
+#   ipv4_src and port_dst optional 
 flows:
-
   - id: 1
-    ipv4_dest: 10.0.3.3
-    ipv4_src: 10.0.1.1
-    l4_proto: tcp
-    port_dest: 55555
-    frequency : 2 #1 of every 2 paquets 
+    ipv4_dst: 10.0.2.2
+    l4_proto: udp
+    ipv4_src: wildcard
+    port_dst: wildcard
+    frequency : 1 # 1 of every paquet
     instructions:
       - node_id
-  - id: 3
-    ipv4_dest: 10.0.2.2
+  - id: 2
+    ipv4_dst: 10.0.3.3
+    l4_proto: udp
     ipv4_src: 10.0.1.1
-    port_dest: wildcard
-    l4_proto: tcp
-    frequency : 3  #1 of every 2 paquets
+    port_dst: 55555
+    frequency : 1  # 1 of every paquet
     instructions:
       - node_id
       - hop_latency
-  # - id: 2
-  #   ipv4_dest: 10.0.2.2
-  #   ipv4_src: 10.0.1.1
-  #   l4_proto: udp
-  #   port_dest: 55555
-  #   frequency : 2  #1 of every 2 paquets
-  #   instructions:
-  #     - node_id
-  #     - hop_latency
-  #     - queue_id_occupancy
-
-
-
+  - id: 3
+    ipv4_dst: 10.0.3.3
+    l4_proto: udp
+    ipv4_src: 10.0.1.1
+    port_dst: 5001
+    frequency : 100  # 1 of every 100 paquet
+    instructions:
+      - node_id
+      - hop_latency
+      - queue_id_occupancy
+ 
 # Possible metadata instructions:
 # - node_id
 # - lv1_if_id
