@@ -108,6 +108,7 @@ def setup_source_instructions(switch, config, p4info_helper):
             },
             priority = priority
         )
+        print("Writing entry in INT sampling table, for flow id " + str(flowId))
         switch.WriteTableEntry(table_entry)
         
         # Add table entry to setup INT
@@ -119,6 +120,7 @@ def setup_source_instructions(switch, config, p4info_helper):
                 'instructionBitmap': instruction
             }
         )
+        print("Writing entry in INT add headers table, for flow id " + str(flowId))
         switch.WriteTableEntry(table_entry)
 
         # if dest['l4_proto'] == 'tcp':
@@ -242,6 +244,7 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         print("Writing basic forwarding rules from %s-runtime.json" % switch_name)        
         push_rules("%s/%s-runtime.json"% (scenario, switch_name), switch, p4info_helper)
        
+        # TODO. Remove this.
         for dest in config_file['flows']:
             # TODO. get only the first address?
             # in the current example, ok because only one IP dest addr...
@@ -257,48 +260,51 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         ) 
         switch.WriteTableEntry(table_entry)
  
-        write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
-                    "SwitchEgress.add_lv1_if_id", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_hop_latency_hdr",
-                    "SwitchEgress.add_hop_latency", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_queue_id_occupancy_hdr",
-                    "SwitchEgress.add_queue_id_occupancy", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_ingress_timestamp_hdr",
-                    "SwitchEgress.add_ingress_timestamp", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_egress_timestamp_hdr",
-                    "SwitchEgress.add_egress_timestamp", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_lv2_if_id_hdr",
-                    "SwitchEgress.add_lv2_if_id", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_eg_if_tx_util_hdr",
-                    "SwitchEgress.add_eg_if_tx_util", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
-        write_int_rules("SwitchEgress.add_buffer_id_occupancy_hdr",
-                    "SwitchEgress.add_buffer_id_occupancy", 
-                    p4info_helper, 
-                    addr, 
-                    switch)
+        # write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
+        #             "SwitchEgress.add_lv1_if_id", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_hop_latency_hdr",
+        #             "SwitchEgress.add_hop_latency", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_queue_id_occupancy_hdr",
+        #             "SwitchEgress.add_queue_id_occupancy", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_ingress_timestamp_hdr",
+        #             "SwitchEgress.add_ingress_timestamp", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_egress_timestamp_hdr",
+        #             "SwitchEgress.add_egress_timestamp", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_lv2_if_id_hdr",
+        #             "SwitchEgress.add_lv2_if_id", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_eg_if_tx_util_hdr",
+        #             "SwitchEgress.add_eg_if_tx_util", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
+        # write_int_rules("SwitchEgress.add_buffer_id_occupancy_hdr",
+        #             "SwitchEgress.add_buffer_id_occupancy", 
+        #             p4info_helper, 
+        #             addr, 
+        #             switch)
 
+        # TODO. Remove this?
         if switch_role != SOURCE:
+            print("Using this address %s for update_int_hdrs " % addr)
+            print("TO CHANGE...")
             write_int_rules("SwitchEgress.update_int_hdrs",
                         "SwitchEgress.update_int_headers", 
                         p4info_helper, 
@@ -309,6 +315,7 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
             # Source rules
             setup_source_instructions(switch, config_file, p4info_helper)
         elif switch_role == SINK:
+            # Sink rules
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchIngress.trgh",
                 match_fields={
@@ -320,7 +327,7 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
                 }
             ) 
             switch.WriteTableEntry(table_entry)
-            # Sink rules
+            # TODO. Is this push sink_rules necessary?
             push_rules("topo/sink_rules.json", switch, p4info_helper)
             print("Writing DigestEntry to SINK")
             switch.WriteDigestEntry(digest_list=[392481334])
