@@ -134,6 +134,7 @@ struct metadata {
     int_report_t int_report;  
     int_metadata_t int_metadata;
     resubmit_meta_t resubmit_meta;
+    bit<32> flow_id;
 }
 
 struct headers {

@@ -19,7 +19,7 @@ header ipv4_t {
     bit<3>  flags;
     bit<13> fragOffset;
     bit<8>  ttl;
-    bit<8>  protoType;
+    bit<8>  protocol;
     bit<16> checksum;
     ipv4Addr_t srcAddr;
     ipv4Addr_t dstAddr;

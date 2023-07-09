@@ -29,7 +29,7 @@ parser SwitchParser(packet_in packet,
     }
 
     state check_l4_proto {
-        transition select(hdr.ipv4.protoType) {
+        transition select(hdr.ipv4.protocol) {
             TYPE_TCP : parse_tcp;
             TYPE_UDP : parse_udp;
             default  : accept;

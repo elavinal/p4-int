@@ -18,7 +18,7 @@ control SwitchComputeChecksum(inout headers hdr, inout metadata meta){
               hdr.ipv4.flags,
               hdr.ipv4.fragOffset,
               hdr.ipv4.ttl,
-              hdr.ipv4.protoType,
+              hdr.ipv4.protocol,
               hdr.ipv4.srcAddr,
               hdr.ipv4.dstAddr },
             hdr.ipv4.checksum,

@@ -129,10 +129,12 @@ control SwitchEgress(inout headers hdr,
     /******************* T A B L E S ************************/
 
 
+    // No look-up table, just a default action
+    // The controler adds one table entry: add_node_id with the switch's id 
     table add_node_id_hdr {
-        key = {
-            hdr.ipv4.dstAddr : lpm;
-        }
+        // key = {
+        //     hdr.ipv4.dstAddr : lpm;
+        // }
         actions = {
             add_node_id;
             NoAction;
