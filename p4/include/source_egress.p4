@@ -15,12 +15,13 @@ control SwitchEgress(inout headers hdr,
 
 
     action increment(bit<32> id, bit<32> frequency){ 
-         bit<32> tmp;
-         sampling.read(tmp,id); //we go the the counter associated with id
-         tmp = tmp +1; //increment the counter
-         sampling.write(id,tmp); // write it
-         tmpFrequency.write(0,frequency); //stock the max frequency in a register 
-         tmpID.write(0,id); //stock the id in a register
+        bit<32> tmp;
+        sampling.read(tmp,id); //we go the the counter associated with id
+        tmp = tmp +1; //increment the counter
+        sampling.write(id,tmp); // write it
+        tmpFrequency.write(0,frequency); //stock the max frequency in a register 
+        tmpID.write(0,id); //stock the id in a register
+        meta.flow_id = id;
     }
 
     action setup_int(int_instruction_t instructionBitmap) {
@@ -154,19 +155,22 @@ control SwitchEgress(inout headers hdr,
 
     /******************* T A B L E S ************************/
 
-table add_int_hdr_udp {
+    table add_int_hdr {
+        key = {
+            meta.flow_id : exact;
+        }
         actions = {
             setup_int;
+            NoAction;
         }
+        default_action = NoAction;
     }
 
-table add_int_hdr_tcp {
-        actions = {
-            setup_int;
-           
-        }
-    }
-
+    // table add_int_hdr_tcp {
+    //     actions = {
+    //         setup_int;
+    //     }
+    // }
 
     table add_node_id_hdr {
         
@@ -232,23 +236,13 @@ table add_int_hdr_tcp {
         }
     }
 
-table sampleUDP {
+    table sample_int {
         key = {
-            hdr.ipv4.dstAddr : exact;
-            hdr.ipv4.srcAddr : exact;
-            hdr.udp.dstPort : ternary; 
-        }
-        actions = {
-            increment;
-            NoAction;
-        }
-        default_action = NoAction();
-    }
-table sampleTCP {
-        key = {
-            hdr.ipv4.dstAddr : exact;
-            hdr.ipv4.srcAddr : exact;
-            hdr.tcp.dstPort  : ternary;
+            hdr.ipv4.dstAddr  : exact;
+            hdr.ipv4.protocol : exact;
+            hdr.ipv4.srcAddr  : ternary;
+            hdr.udp.dstPort   : ternary;
+            hdr.tcp.dstPort   : ternary; 
         }
         actions = {
             increment;
@@ -257,14 +251,41 @@ table sampleTCP {
         default_action = NoAction();
     }
 
+    // table sampleUDP {
+    //     key = {
+    //         hdr.ipv4.dstAddr : exact;
+    //         hdr.ipv4.srcAddr : exact;
+    //         hdr.udp.dstPort : ternary; 
+    //     }
+    //     actions = {
+    //         increment;
+    //         NoAction;
+    //     }
+    //     default_action = NoAction();
+    // }
+
+    // table sampleTCP {
+    //     key = {
+    //         hdr.ipv4.dstAddr : exact;
+    //         hdr.ipv4.srcAddr : exact;
+    //         hdr.tcp.dstPort  : ternary;
+    //     }
+    //     actions = {
+    //         increment;
+    //         NoAction;
+    //     }
+    //     default_action = NoAction();
+    // }
+
     apply {
-         if(hdr.tcp.isValid()) {
-                sampleTCP.apply();
-            }
-            if(hdr.udp.isValid()) {
-                sampleUDP.apply();
-            }
-        
+
+        sample_int.apply();
+        // if(hdr.tcp.isValid()) {
+        //         sampleTCP.apply();
+        //     }
+        //     if(hdr.udp.isValid()) {
+        //         sampleUDP.apply();
+        //     }
 
         bit<32> a;
         bit<32> b;
@@ -276,13 +297,13 @@ table sampleTCP {
         
         if(1 == c){ //if the max frequency fixed is equal to the counter
             //we add int headers to the paquet
-            if(hdr.tcp.isValid()) {
-                add_int_hdr_tcp.apply();
-            }
-            if(hdr.udp.isValid()) {
-                add_int_hdr_udp.apply();
-            }
-            
+            add_int_hdr.apply();
+            // if(hdr.tcp.isValid()) {
+            //     add_int_hdr_tcp.apply();
+            // }
+            // if(hdr.udp.isValid()) {
+            //     add_int_hdr_udp.apply();
+            // }            
         }
         if(b == c){
             sampling.write(a,0); //reset the counter
