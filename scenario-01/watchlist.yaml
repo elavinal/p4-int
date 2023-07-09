@@ -15,7 +15,7 @@ flows:
     l4_proto: udp
     ipv4_src: wildcard
     port_dst: wildcard
-    frequency : 1 # 1 of every paquet
+    frequency: 1 # 1 of every paquet
     instructions:
       - node_id
   - id: 2
@@ -23,7 +23,7 @@ flows:
     l4_proto: udp
     ipv4_src: 10.0.1.1
     port_dst: 55555
-    frequency : 1  # 1 of every paquet
+    frequency: 1  # 1 of every paquet
     instructions:
       - node_id
       - hop_latency
@@ -32,7 +32,7 @@ flows:
     l4_proto: udp
     ipv4_src: 10.0.1.1
     port_dst: 5001
-    frequency : 100  # 1 of every 100 paquet
+    frequency: 500  # 1 of every 500 paquet
     instructions:
       - node_id
       - hop_latency
