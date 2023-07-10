@@ -159,14 +159,15 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
        
 
         # Add the switch's id to a data plane table (for the Node ID metadata) 
-        table_entry = p4info_helper.buildTableEntry(
-            table_name="SwitchEgress.add_node_id_hdr",
-            action_name="SwitchEgress.add_node_id",
-            action_params={
-                "switch_id": int(switch_name[1]),
-            }
-        ) 
-        switch.WriteTableEntry(table_entry)
+        if switch_role != SINK: 
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchEgress.add_node_id_hdr",
+                action_name="SwitchEgress.add_node_id",
+                action_params={
+                    "switch_id": int(switch_name[1]),
+                }
+            ) 
+            switch.WriteTableEntry(table_entry)
  
 
 

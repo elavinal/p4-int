@@ -109,7 +109,28 @@ control SwitchIngress(inout headers hdr,
                 // send to the collector the report
                 digest<int_report_t>(1, meta.int_report);
 
-            
+                hdr.ipv4.dscp = (bit<6>) hdr.int_md_shim.nptDependentField;
+                hdr.ipv4.totalLen = hdr.ipv4.totalLen - ((bit<16>) hdr.int_md_shim.len << 2) - 4; // Because INT shim header isn't counted for length
+                if(hdr.udp.isValid()) {
+                    hdr.udp.len = hdr.udp.len 
+                        - ((bit<16>) hdr.int_md_shim.len << 2)
+                        - ((bit<16>) hdr.int_md_header.hopMetaLength << 2)
+                        - 4; //Because INT shim header isn't counted for length
+                }
+                //Deleting INT from the client's packet
+                hdr.int_md_shim.setInvalid();
+                hdr.int_md_header.setInvalid();
+                hdr.tel_rep_group_header.setInvalid();
+                hdr.node_id.setInvalid();
+                hdr.lv1_if_id.setInvalid();
+                hdr.hop_latency.setInvalid();
+                hdr.queue_id_occupancy.setInvalid();
+                hdr.ingress_timestamp.setInvalid();
+                hdr.egress_timestamp.setInvalid();
+                hdr.lv2_if_id.setInvalid();
+                hdr.eg_if_tx_util.setInvalid();
+                hdr.buffer_id_occupancy.setInvalid();
+                hdr.metadata_extractor.pop_front(MAX_MD_WORDS);
             }
         }
         if (hdr.ipv4.isValid())
