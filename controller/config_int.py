@@ -244,11 +244,6 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         print("Writing basic forwarding rules from %s-runtime.json" % switch_name)        
         push_rules("%s/%s-runtime.json"% (scenario, switch_name), switch, p4info_helper)
        
-        # TODO. Remove this.
-        for dest in config_file['flows']:
-            # TODO. get only the first address?
-            # in the current example, ok because only one IP dest addr...
-            addr = dest['ipv4_dst']
 
         # Add the switch's id to a data plane table (for the Node ID metadata) 
         table_entry = p4info_helper.buildTableEntry(
@@ -301,15 +296,6 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         #             addr, 
         #             switch)
 
-        # TODO. Remove this?
-        if switch_role != SOURCE:
-            print("Using this address %s for update_int_hdrs " % addr)
-            print("TO CHANGE...")
-            write_int_rules("SwitchEgress.update_int_hdrs",
-                        "SwitchEgress.update_int_headers", 
-                        p4info_helper, 
-                        addr, 
-                        switch)
 
         if switch_role == SOURCE: 
             # Source rules
@@ -327,8 +313,6 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
                 }
             ) 
             switch.WriteTableEntry(table_entry)
-            # TODO. Is this push sink_rules necessary?
-            push_rules("topo/sink_rules.json", switch, p4info_helper)
             print("Writing DigestEntry to SINK")
             switch.WriteDigestEntry(digest_list=[392481334])
 

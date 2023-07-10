@@ -2,7 +2,7 @@ BUILD_DIR = build
 SRC_DIR = p4
 PCAP_DIR = pcaps
 LOG_DIR = logs
-LOG_LEVEL = error
+LOG_LEVEL = trace
 
 P4C = p4c-bm2-ss
 

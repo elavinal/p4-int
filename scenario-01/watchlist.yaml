@@ -37,6 +37,15 @@ flows:
       - node_id
       - hop_latency
       - queue_id_occupancy
+  - id: 4
+    ipv4_dst: 10.0.2.2
+    l4_proto: udp
+    ipv4_src: wildcard
+    port_dst: 55555
+    frequency: 1 # 1 of every paquet
+    instructions:
+      - node_id
+      - hop_latency
  
 # Possible metadata instructions:
 # - node_id

@@ -93,94 +93,32 @@ control SwitchEgress(inout headers hdr,
         }
     }
 
-    table add_lv1_if_id_hdr {
-        
-        actions = {
-            add_lv1_if_id;
-        }
-    }
-
-    table add_hop_latency_hdr {
-        
-        actions = {
-            add_hop_latency;
-            
-        }
-    }
-
-    table add_queue_id_occupancy_hdr {
-        
-        actions = {
-            add_queue_id_occupancy;
-        }
-    }
-
-    table add_ingress_timestamp_hdr {
-       
-        actions = {
-            add_ingress_timestamp;
-        }
-    }
-
-    table add_egress_timestamp_hdr {
-        
-        actions = {
-            add_egress_timestamp;
-        }
-    }
-
-    table add_lv2_if_id_hdr {
-       
-        actions = {
-            add_lv2_if_id;
-        }
-    }
-
-    table add_eg_if_tx_util_hdr {
-        
-        actions = {
-            add_eg_if_tx_util;
-        }
-    }
-
-    table add_buffer_id_occupancy_hdr {
-        
-        actions = {
-            add_buffer_id_occupancy;
-        }
-    }
-
-    table update_int_hdrs {
-        actions = {
-            update_int_headers;
-        }
-    }
 
     apply {
         if(hdr.int_md_shim.isValid() 
            && hdr.int_md_header.isValid()
            && (hdr.int_md_header.flags & HOP_COUNT_EXCEEDED == 0b000)) {
             
-            update_int_hdrs.apply();
+            update_int_headers();
             int_instruction_t instructions = hdr.int_md_header.instructionBitmap;
             if(instructions & NODE_ID != 0)
                 add_node_id_hdr.apply();
             if(instructions & LVL1_IF_ID != 0)
-                add_lv1_if_id_hdr.apply();
+                add_lv1_if_id();
             if(instructions & HOP_LATENCY != 0)
-                add_hop_latency_hdr.apply();
+                add_hop_latency();
             if(instructions & QUEUE_ID_OCCUPANCY != 0)
-                add_queue_id_occupancy_hdr.apply();
+                add_queue_id_occupancy();
             if(instructions & INGRESS_TIMESTAMP != 0)
-                add_ingress_timestamp_hdr.apply();
+                add_ingress_timestamp();
             if(instructions & EGRESS_TIMESTAMP != 0)
-                add_egress_timestamp_hdr.apply();
+                add_egress_timestamp();
             if(instructions & LVL2_IF_ID != 0)
-                add_lv2_if_id_hdr.apply();
+                add_lv2_if_id();
             if(instructions & EG_IF_TX_UTIL != 0)
-                add_eg_if_tx_util_hdr.apply();
+                add_eg_if_tx_util();
             if(instructions & BUFFER_ID_OCCUPANCY != 0)
-                add_buffer_id_occupancy_hdr.apply();
+                add_buffer_id_occupancy();
             if(hdr.udp.isValid()) {
                 hdr.udp.len = hdr.udp.len + ((bit<16>) hdr.int_md_header.hopMetaLength << 2);
             }
