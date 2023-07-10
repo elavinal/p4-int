@@ -54,7 +54,7 @@ def setup_source_instructions(switch, config, p4info_helper):
         srcAddr = dest['ipv4_src']
         dstPort = dest['port_dst']
         flowId = dest['id']
-        frequency = dest['frequency']
+        sampling = dest['sampling']
         instruction = 0
         for instruct in dest['instructions']:
             if instruct == 'node_id':
@@ -104,7 +104,7 @@ def setup_source_instructions(switch, config, p4info_helper):
             action_name = 'SwitchEgress.increment',
             action_params = {
                 'id': flowId,
-                'frequency': frequency
+                'sampling': sampling
             },
             priority = priority
         )
@@ -123,93 +123,6 @@ def setup_source_instructions(switch, config, p4info_helper):
         print("Writing entry in INT add headers table, for flow id " + str(flowId))
         switch.WriteTableEntry(table_entry)
 
-        # if dest['l4_proto'] == 'tcp':
-        #     table_entry = p4info_helper.buildTableEntry(
-        #         table_name="SwitchEgress.add_int_hdr_tcp",
-        #         match_fields={
-        #         },
-        #         action_name="SwitchEgress.setup_int",
-        #         action_params={
-        #             "instructionBitmap" : instruction
-        #         }
-        #     )
-        #     switch.WriteTableEntry(table_entry)
-        #     if(dstPort == 'wildcard'):
-        #         print("TCP wildcard")
-        #         table_entry = p4info_helper.buildTableEntry(
-        #         table_name="SwitchEgress.sampleTCP",
-        #         match_fields={
-        #         "hdr.ipv4.dstAddr": (dstAddr),
-        #         "hdr.ipv4.srcAddr": (srcAddr)
-        #         },
-        #         action_name="SwitchEgress.increment",
-        #         action_params={
-        #             "id" : flowId,
-        #             "frequency" : frequency
-        #         },
-        #         priority = 80
-        #         )
-        #     else:
-        #         table_entry = p4info_helper.buildTableEntry(
-        #         table_name="SwitchEgress.sampleTCP",
-        #         match_fields={
-        #         "hdr.ipv4.dstAddr": (dstAddr),
-        #         "hdr.ipv4.srcAddr": (srcAddr),
-        #         "hdr.tcp.dstPort" : (dstPort, 0xFFFF)
-        #         },
-        #         action_name="SwitchEgress.increment",
-        #         action_params={
-        #             "id" : flowId,
-        #             "frequency" : frequency
-        #         },
-        #         priority = 100
-        #         )
-        #         print("TCP normal")
-
-        # elif dest['l4_proto'] == 'udp':
-        #     table_entry = p4info_helper.buildTableEntry(
-        #         table_name="SwitchEgress.add_int_hdr_udp",
-        #         match_fields={
-               
-        #         },
-        #         action_name="SwitchEgress.setup_int",
-        #         action_params={
-        #             "instructionBitmap" : instruction
-        #         }
-        #     )
-        #     switch.WriteTableEntry(table_entry)
-        #     if(dstPort == 'wildcard'):
-        #         table_entry = p4info_helper.buildTableEntry(
-        #         table_name="SwitchEgress.sampleUDP",
-        #         match_fields={
-        #         "hdr.ipv4.dstAddr": (dstAddr),
-        #         "hdr.ipv4.srcAddr": (srcAddr)
-        #         },
-        #         action_name="SwitchEgress.increment",
-        #         action_params={
-        #             "id" : flowId,
-        #             "frequency" : frequency
-        #         },
-        #         priority = 80
-        #         )
-        #         print("Udp wildcard")
-        #     else :
-        #         table_entry = p4info_helper.buildTableEntry(
-        #         table_name="SwitchEgress.sampleUDP",
-        #         match_fields={
-        #         "hdr.ipv4.dstAddr": (dstAddr),
-        #         "hdr.ipv4.srcAddr": (srcAddr),
-        #         "hdr.udp.dstPort" : (dstPort, 0xFFFF)
-        #         },
-        #         action_name="SwitchEgress.increment",
-        #         action_params={
-        #             "id" : flowId,
-        #             "frequency" : frequency
-        #         },
-        #         priority = 100
-        #         )
-        #         print("Udp normal")
-        # switch.WriteTableEntry(table_entry)
         
 
 # INT roles : 0 source, 1 transit, 2 sink
@@ -255,46 +168,6 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         ) 
         switch.WriteTableEntry(table_entry)
  
-        # write_int_rules("SwitchEgress.add_lv1_if_id_hdr",
-        #             "SwitchEgress.add_lv1_if_id", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_hop_latency_hdr",
-        #             "SwitchEgress.add_hop_latency", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_queue_id_occupancy_hdr",
-        #             "SwitchEgress.add_queue_id_occupancy", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_ingress_timestamp_hdr",
-        #             "SwitchEgress.add_ingress_timestamp", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_egress_timestamp_hdr",
-        #             "SwitchEgress.add_egress_timestamp", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_lv2_if_id_hdr",
-        #             "SwitchEgress.add_lv2_if_id", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_eg_if_tx_util_hdr",
-        #             "SwitchEgress.add_eg_if_tx_util", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
-        # write_int_rules("SwitchEgress.add_buffer_id_occupancy_hdr",
-        #             "SwitchEgress.add_buffer_id_occupancy", 
-        #             p4info_helper, 
-        #             addr, 
-        #             switch)
 
 
         if switch_role == SOURCE: 
@@ -304,9 +177,6 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
             # Sink rules
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchIngress.trgh",
-                match_fields={
-                    
-                },
                 action_name="SwitchIngress.trgh_digest",
                 action_params={
                     "switch_id": int(switch_name[1]),

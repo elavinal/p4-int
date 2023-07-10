@@ -6,19 +6,19 @@ control SwitchEgress(inout headers hdr,
                      inout standard_metadata_t standard_metadata) {
 
     /********************  R E G I S T E R S ********************/
-    register<bit<32>>(10) sampling; //used as a table, contain flow id and its counter  
+    register<bit<32>>(10) RegSampling; //used as a table, contain flow id and its counter  
     register<bit<32>>(1) tmpFrequency; //used a variable 
     register<bit<32>>(1) tmpID; // same
 
 
     /********************  A C T I O N S ***********************/
 
-    action increment(bit<32> id, bit<32> frequency){ 
+    action increment(bit<32> id, bit<32> sampling){ 
         bit<32> tmp;
-        sampling.read(tmp,id); //we go the the counter associated with id
+        RegSampling.read(tmp,id); //we go the the counter associated with id
         tmp = tmp +1; //increment the counter
-        sampling.write(id,tmp); // write it
-        tmpFrequency.write(0,frequency); //stock the max frequency in a register 
+        RegSampling.write(id,tmp); // write it
+        tmpFrequency.write(0,sampling); //stock the max frequency in a register 
         tmpID.write(0,id); //stock the id in a register
         meta.flow_id = id;
     }
@@ -196,7 +196,7 @@ control SwitchEgress(inout headers hdr,
 
         tmpID.read(a,0); // a = tmp ID we just change in sampleTCP/UDP
         tmpFrequency.read(b,0); // same for b 
-        sampling.read(c,a); // we check the counter with tmpID 
+        RegSampling.read(c,a); // we check the counter with tmpID 
         
         if(1 == c){ //if the max frequency fixed is equal to the counter
             //we add int headers to the paquet
@@ -209,7 +209,7 @@ control SwitchEgress(inout headers hdr,
             // }            
         }
         if(b == c){
-            sampling.write(a,0); //reset the counter
+            RegSampling.write(a,0); //reset the counter
         }
 
         // Adding all the required headers according to instruction bitmap
