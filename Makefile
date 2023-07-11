@@ -7,6 +7,7 @@ LOG_LEVEL = trace
 P4C = p4c-bm2-ss
 
 BASIC = $(BUILD_DIR)/basic_switch.json
+GLOBAL = $(BUILD_DIR)/global_switch.json
 SOURCE = $(BUILD_DIR)/source_switch.json
 TRANSIT = $(BUILD_DIR)/transit_switch.json
 SINK = $(BUILD_DIR)/sink_switch.json
@@ -23,7 +24,7 @@ s02-run: build
 s02-int:
 	sudo python3 controller/config_int.py --dir scenario-02	
 
-build: dirs $(BASIC) $(SOURCE) $(TRANSIT) $(SINK)
+build: dirs $(BASIC) $(GLOBAL) $(SOURCE) $(TRANSIT) $(SINK)
 
 # ex: p4c-bm2-ss --p4v 16
 #                --p4runtime-files build/source_switch.p4.p4info.txt

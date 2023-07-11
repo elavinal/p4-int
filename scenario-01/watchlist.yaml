@@ -18,6 +18,8 @@ flows:
     sampling: 1 # 1 of every paquet
     instructions:
       - node_id
+      - hop_latency
+      - queue_id_occupancy
   - id: 2
     ipv4_dst: 10.0.3.3
     l4_proto: udp

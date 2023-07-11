@@ -130,9 +130,9 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
     
     # INT role
     if switch_role == SOURCE:
-        p4file_prefix = "build/source_switch"
+        p4file_prefix = "build/global_switch"
     elif switch_role == TRANSIT:
-        p4file_prefix = "build/transit_switch"
+        p4file_prefix = "build/global_switch"
     elif switch_role == SINK:
         p4file_prefix = "build/sink_switch"
 
@@ -174,6 +174,27 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
         if switch_role == SOURCE: 
             # Source rules
             setup_source_instructions(switch, config_file, p4info_helper)
+            print('attribution role SOURCE')
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchEgress.switch_roles",
+                action_name="SwitchEgress.source_action",
+                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2')} #static addr , had to be fix
+                
+                
+            ) 
+            switch.WriteTableEntry(table_entry)
+            
+        elif switch_role == TRANSIT:
+
+            print('attribution role TRANSIT')
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchEgress.switch_roles",
+                action_name="SwitchEgress.transit_action",
+                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2')} #static addr with static table, had to be fix 
+             
+            ) 
+            switch.WriteTableEntry(table_entry)
+    
         elif switch_role == SINK:
             # Sink rules
             table_entry = p4info_helper.buildTableEntry(
