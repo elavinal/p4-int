@@ -44,6 +44,7 @@ control SwitchEgress(inout headers hdr,
         hdr.int_md_header.domainSpecificFlags = 0;
         hdr.int_md_header.domainSpecificInstructions = 0;
 
+        //initiate the number of metadata checked per hop
         if (instructionBitmap & NODE_ID != 0)
             hdr.int_md_header.hopMetaLength = hdr.int_md_header.hopMetaLength + 1;
         if ((instructionBitmap & LVL1_IF_ID) != 0)
@@ -164,6 +165,7 @@ control SwitchEgress(inout headers hdr,
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
     }
 
+    //update total lenght , decrement the number remaining hop
     action update_int_headers() {
         if(hdr.int_md_header.remainingHopCount > 0) {
             hdr.int_md_header.remainingHopCount = hdr.int_md_header.remainingHopCount - 1;
@@ -213,7 +215,7 @@ control SwitchEgress(inout headers hdr,
 
 
     apply {
-        if (meta.role == 1) {
+        if (meta.role == 1) { //SOURCE
 
                 sample_int.apply();
 
@@ -233,7 +235,7 @@ control SwitchEgress(inout headers hdr,
                 }
             }
 
-        else if (meta.role == 2) {
+        else if (meta.role == 2) { //TRANSIT
              if (hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {
                 update_int_headers();
              }

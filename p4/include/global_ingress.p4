@@ -16,7 +16,7 @@ control SwitchIngress(inout headers hdr,
     }
 
     action set_int_role(bit<8> role){
-        meta.role = role;
+        meta.role = role; //save the assigned role into metadata strcutur
     }
 
     table ipv4_lpm {

@@ -31,16 +31,6 @@ def push_rules(sw_runtime_file, switch, p4info_helper):
         for entry in table_entries:
             p4controller.insertTableEntry(switch, entry, p4info_helper)
 
-def write_int_rules(table_name, action_name, p4info_helper, addr, switch):
-    print("Writing INT rule for table %s" % table_name)
-    table_entry = p4info_helper.buildTableEntry(
-        table_name=table_name,
-        match_fields={
-
-        },
-        action_name=action_name)
-    switch.WriteTableEntry(table_entry)
-
 def setup_source_instructions(switch, config, p4info_helper):
 
     for dest in config['flows']:
@@ -171,7 +161,7 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
                 }
             ) 
             switch.WriteTableEntry(table_entry)
-            print('attribution roles')
+            print('role attribution')
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchIngress.switch_roles",
                 action_name="SwitchIngress.set_int_role",
