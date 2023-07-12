@@ -178,7 +178,8 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.switch_roles",
                 action_name="SwitchEgress.source_action",
-                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2')} #static addr , had to be fix
+                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2',0xFFFFFFFF)},
+                priority = 10  #static addr , had to be fix
                 
                 
             ) 
@@ -190,8 +191,9 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
             table_entry = p4info_helper.buildTableEntry(
                 table_name="SwitchEgress.switch_roles",
                 action_name="SwitchEgress.transit_action",
-                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2')} #static addr with static table, had to be fix 
-             
+                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2',0xFFFFFFFF)},
+                priority = 10 #static addr with static table, had to be fix 
+
             ) 
             switch.WriteTableEntry(table_entry)
     
