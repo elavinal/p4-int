@@ -6,7 +6,7 @@
 #include "include/headers.p4"
 #include "include/int_headers.p4"
 #include "include/int_parser.p4"
-#include "include/basic_ingress.p4"
+#include "include/global_ingress.p4"
 #include "include/global_egress.p4"
 #include "include/deparser.p4"
 #include "include/checksum.p4"

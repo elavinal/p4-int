@@ -164,14 +164,6 @@ control SwitchEgress(inout headers hdr,
         hdr.ipv4.totalLen = hdr.ipv4.totalLen + 4;
     }
 
-
-    action source_action() {
-
-    }
-    action transit_action() {
-
-    }
-
     action update_int_headers() {
         if(hdr.int_md_header.remainingHopCount > 0) {
             hdr.int_md_header.remainingHopCount = hdr.int_md_header.remainingHopCount - 1;
@@ -219,19 +211,9 @@ control SwitchEgress(inout headers hdr,
         default_action = NoAction();
     }
 
-    table switch_roles {
-        key = {
-            hdr.ipv4.dstAddr : ternary;
-        }
-        actions = {
-            source_action;
-            transit_action;
-        }
-    }
 
     apply {
-        switch (switch_roles.apply().action_run) {
-            source_action: {
+        if (meta.role == 1) {
 
                 sample_int.apply();
 
@@ -251,11 +233,13 @@ control SwitchEgress(inout headers hdr,
                 }
             }
 
-            transit_action: {
+        else if (meta.role == 2) {
+             if (hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {
                 update_int_headers();
+             }
                 
             }
-        }
+        
                 
         // Adding all the required headers according to instruction bitmap
         if (hdr.int_md_shim.isValid() && hdr.int_md_header.isValid()) {

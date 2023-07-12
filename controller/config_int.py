@@ -131,10 +131,13 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
     # INT role
     if switch_role == SOURCE:
         p4file_prefix = "build/global_switch"
+        RoleNumber = 1
     elif switch_role == TRANSIT:
         p4file_prefix = "build/global_switch"
+        RoleNumber = 2
     elif switch_role == SINK:
         p4file_prefix = "build/sink_switch"
+        RoleNumber = 3
 
     p4info_helper = p4runtime_lib.helper.P4InfoHelper("%s.p4.p4info.txt" % p4file_prefix)
             
@@ -168,35 +171,21 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
                 }
             ) 
             switch.WriteTableEntry(table_entry)
+            print('attribution roles')
+            table_entry = p4info_helper.buildTableEntry(
+                table_name="SwitchIngress.switch_roles",
+                action_name="SwitchIngress.set_int_role",
+                action_params={"role": RoleNumber}
+            ) 
+            switch.WriteTableEntry(table_entry)
+
  
 
 
         if switch_role == SOURCE: 
             # Source rules
             setup_source_instructions(switch, config_file, p4info_helper)
-            print('attribution role SOURCE')
-            table_entry = p4info_helper.buildTableEntry(
-                table_name="SwitchEgress.switch_roles",
-                action_name="SwitchEgress.source_action",
-                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2',0xFFFFFFFF)},
-                priority = 10  #static addr , had to be fix
-                
-                
-            ) 
-            switch.WriteTableEntry(table_entry)
-            
-        elif switch_role == TRANSIT:
-
-            print('attribution role TRANSIT')
-            table_entry = p4info_helper.buildTableEntry(
-                table_name="SwitchEgress.switch_roles",
-                action_name="SwitchEgress.transit_action",
-                match_fields = {'hdr.ipv4.dstAddr': ('10.0.2.2',0xFFFFFFFF)},
-                priority = 10 #static addr with static table, had to be fix 
-
-            ) 
-            switch.WriteTableEntry(table_entry)
-    
+      
         elif switch_role == SINK:
             # Sink rules
             table_entry = p4info_helper.buildTableEntry(
@@ -209,7 +198,7 @@ def configure_switch(switch_name, switch_role, scenario, config_file):
             switch.WriteTableEntry(table_entry)
             print("Writing DigestEntry to SINK")
             switch.WriteDigestEntry(digest_list=[392481334])
-
+        
     except grpc.RpcError as e:
         printGrpcError(e)
 
